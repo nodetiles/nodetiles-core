@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <link rel="stylesheet" href="http://code.leafletjs.com/leaflet-0.3.1/leaflet.css" />
+  
+</head>
+<body>
+  <div id="map" style="width:900px; height: 500px"></div>
+  
+   <!-- Javascript Libraries-->
+   <!--  jQuery  --><script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+   			        		<script>window.jQuery || document.write('<script src="js/jquery-1.7.1.min.js"><\/script>')</script>
+   <!--    d3    --><!--<script src="http://raw.github.com/mbostock/d3/master/d3.v2.min.js"></script>-->
+   <!-- Leaflet  --><script src="http://code.leafletjs.com/leaflet-0.3.1/leaflet.js"></script>
+   
+   <script>
+    // Leaflet Script
+    $(document).ready( function () {
+      // USE THE BALTIMORE DATA FOR NOW (UGH);
+      var dataUrl = "https://api.mongohq.com/databases/chicago/collections/requests/documents?_apikey=tvepg5ejlqmvfh6ph52i&callback=jsonp&limit=100&q={status:open}"; 
+      var mapCenter = new L.LatLng(39.29658,-76.612816);
+      var mapZoom = 12;
+      
+      var markers = [];
+      
+      // initialize the map on the "map" div
+      var map = new L.Map('map');
+
+      // create a CloudMade tile layer (or use other provider of your choice)
+      var cloudmade = new L.TileLayer('http://localhost:3000/tiles/{z}/{x}/{y}.png', {
+          attribution: 'Toad of Toad Manor',
+          maxZoom: 18
+      });
+
+      // add the CloudMade layer to the map set the view to a given center and zoom
+      map.addLayer(cloudmade).setView(mapCenter, mapZoom);
+
+
+      // create a marker in the given location and add it to the map
+      // var marker = new L.Marker(new L.LatLng(51.5, -0.09));
+      // map.addLayer(marker);
+
+      // attach a given HTML content to the marker and immediately open it
+      // marker.bindPopup("A pretty CSS3 popup.<br />Easily customizable.").openPopup();
+      
+      $.ajax({
+        type: 'GET',
+        url: dataUrl,
+        async: false,
+        jsonpCallback: 'jsonp',
+        contentType: "application/json",
+        dataType: 'jsonp',
+        success: function(data) {
+          // for (var i =0; i < data.length; i++) {
+          //   addMarker(map, markers, data[i]);
+          // }
+        },
+        error: function(e) {
+          console.log(e.message);
+        }
+      });
+      
+      function addMarker(map, markers, data) {
+        var marker = new L.Marker(new L.LatLng(data.loc[1], data.loc[0]));
+        marker.bindPopup(data.description).openPopup();
+        map.addLayer(marker);
+        markers.push(data);
+      }
+  
+	});
+   </script>
+</body>
+</html>

@@ -5,9 +5,13 @@
 // or from datasf.org, reprojected too:
 // ogr2ogr -f GeoJSON sfbay.js sfbay.shp -t_srs EPSG:4326
 
-var Canvas = require('./vendor/node-canvas/lib/canvas'),
+var Canvas = require('canvas'),
+    Express = require('express'),
+    path = require('path'),
     http = require('http'),
     fs = require('fs');
+    
+var port = process.env.PORT || 3000
     
 var project = {
     'FeatureCollection': function(fc) { fc.features.forEach(project.Feature); },
@@ -33,10 +37,10 @@ var bgColor = '#ffffee'; //'#ddddff';
 
 console.log('loading layers...');
 var layers = [ 
-    Layer('./datasf/sfbay.js', [ { fillStyle: '#ddddff' } ]),
-    Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
-    Layer('./datasf/phys_waterbodies.js', [ { fillStyle: '#ddddff' } ]),
-    Layer('./datasf/StClines.js', [ { strokeStyle: '#aaa', lineWidth: 1.0 } ])
+    Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: '#ddddff', strokeStyle: '#aaa', lineWidth: 1.0 } ]),
+    //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
+    //Layer('./datasf/phys_waterbodies.js', [ { fillStyle: '#ddddff' } ]),
+    //Layer('./datasf/StClines.js', [ { strokeStyle: '#aaa', lineWidth: 1.0 } ])
 ];
 /*var layers = [
     Layer('./naturalearthdata/10m_land.js', [ { fillStyle: '#ffffee' } ]),
@@ -65,7 +69,9 @@ function tile(req, res) {
 
     var d = new Date();
     
-    var coord = req.url.match(/(\d+)/g);
+    // TODO: clean this up since it's halfway to Express
+    var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
+    console.log(coord);
     if (!coord || coord.length != 3) {
         console.error(req.url, 'not a coord, match =', coord);
         res.writeHead(404);
@@ -73,12 +79,20 @@ function tile(req, res) {
         return;
     }
     
+    console.log('Requested tile: ' + coord.join('/'));
+    var done = false;
+    setTimeout(function () {
+      if (!done) {
+        console.log('!!! Tile ' + coord.join('/') + ' didn\'t finish in 10s!');
+      }
+    }, 1000 * 10);
+    
     coord = coord.map(Number);
     //console.log('got coord', coord);
 
     console.log('canvas pool size:', canvasPool.length);
 
-    var canvas = canvasPool.length ? canvasPool.pop() : new Canvas(256,256),
+    var canvas = canvasPool.length ? canvasPool.unshift() : new Canvas(256,256),
         ctx = canvas.getContext('2d');
     
     ctx.fillStyle = bgColor;
@@ -95,9 +109,14 @@ function tile(req, res) {
         res.write(chunk);
     });
     stream.on('end', function() {
-        console.log('streaming done in', new Date - d, 'ms');
+        //console.log('streaming done in', new Date - d, 'ms');
         res.end();
-        canvasPool.push(canvas);
+        // canvasPool.push(canvas);
+        console.log('Returned tile: ' + coord.join('/'));
+        done = true;
+    });
+    stream.on('close', function() {
+        console.log("STREAM CLOSED");
     });
 }
 
@@ -151,5 +170,11 @@ function renderData(ctx, zoom, col, row) {
     });
 }
 
-http.createServer(tile).listen(3000, "localhost");
-console.log('listening on 3000');
+var app = Express.createServer();
+
+app.get('/', function(req, res){
+  res.send(fs.readFileSync('./views/leaflet.html', 'utf8'));
+});
+app.get('/tiles/:zoom/:col/:row', tile);
+
+app.listen(port);
