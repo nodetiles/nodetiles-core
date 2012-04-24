@@ -2,6 +2,7 @@
   "name": "nodetiles",
   "version": "0.0.1",
   "dependencies": {
-    "express": ">= 0.0.1"
+    "express": ">= 0.0.1",
+    "canvas": "git://github.com/bensheldon/node-canvas-heroku.git"
   }
 }
