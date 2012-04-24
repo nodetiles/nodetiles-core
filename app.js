@@ -33,11 +33,13 @@ function Layer(filename, styles) {
     return data;
 }
 
-var bgColor = '#ffffee'; //'#ddddff';
+var bgColor = '#ddddff'; //'#ddddff';
 
 console.log('loading layers...');
 var layers = [ 
-    Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: '#ddddff', strokeStyle: '#aaa', lineWidth: 1.0 } ]),
+  Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+  Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
+    
     //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
     //Layer('./datasf/phys_waterbodies.js', [ { fillStyle: '#ddddff' } ]),
     //Layer('./datasf/StClines.js', [ { strokeStyle: '#aaa', lineWidth: 1.0 } ])
