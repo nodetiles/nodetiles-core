@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html style="margin: 0; height: 100%;">
 <head>
   <meta charset="utf-8">
   
@@ -7,8 +7,8 @@
   <link rel="stylesheet" href="http://code.leafletjs.com/leaflet-0.3.1/leaflet.css" />
   
 </head>
-<body>
-  <div id="map" style="width:900px; height: 500px"></div>
+<body style="margin: 0; height: 100%;">
+  <div id="map" style="width:100%; height: 100%; padding: 0; margin: 0; border: 0;"></div>
   
    <!-- Javascript Libraries-->
    <!--  jQuery  --><script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
@@ -19,58 +19,21 @@
    <script>
     // Leaflet Script
     $(document).ready( function () {
-      // USE THE BALTIMORE DATA FOR NOW (UGH);
-      var dataUrl = "https://api.mongohq.com/databases/chicago/collections/requests/documents?_apikey=tvepg5ejlqmvfh6ph52i&callback=jsonp&limit=100&q={status:open}"; 
       var mapCenter = new L.LatLng(39.29658,-76.612816);
-      var mapZoom = 12;
-      
-      var markers = [];
-      
+      var mapZoom = 11;
+            
       // initialize the map on the "map" div
       var map = new L.Map('map');
 
       // create a CloudMade tile layer (or use other provider of your choice)
-      var cloudmade = new L.TileLayer('/tiles/{z}/{x}/{y}.png', {
+      var nodetiles = new L.TileLayer('/tiles/{z}/{x}/{y}.png', {
           attribution: 'Toad of Toad Manor',
           maxZoom: 18
       });
 
       // add the CloudMade layer to the map set the view to a given center and zoom
-      map.addLayer(cloudmade).setView(mapCenter, mapZoom);
-
-
-      // create a marker in the given location and add it to the map
-      // var marker = new L.Marker(new L.LatLng(51.5, -0.09));
-      // map.addLayer(marker);
-
-      // attach a given HTML content to the marker and immediately open it
-      // marker.bindPopup("A pretty CSS3 popup.<br />Easily customizable.").openPopup();
-      
-      $.ajax({
-        type: 'GET',
-        url: dataUrl,
-        async: false,
-        jsonpCallback: 'jsonp',
-        contentType: "application/json",
-        dataType: 'jsonp',
-        success: function(data) {
-          // for (var i =0; i < data.length; i++) {
-          //   addMarker(map, markers, data[i]);
-          // }
-        },
-        error: function(e) {
-          console.log(e.message);
-        }
-      });
-      
-      function addMarker(map, markers, data) {
-        var marker = new L.Marker(new L.LatLng(data.loc[1], data.loc[0]));
-        marker.bindPopup(data.description).openPopup();
-        map.addLayer(marker);
-        markers.push(data);
-      }
-  
-	});
+      map.addLayer(nodetiles).setView(mapCenter, mapZoom);
+    });
    </script>
    
    <a href="http://github.com/bensheldon/nodetiles"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/camo.github.com/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub"></a>
