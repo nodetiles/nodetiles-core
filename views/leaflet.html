@@ -30,7 +30,7 @@
       var map = new L.Map('map');
 
       // create a CloudMade tile layer (or use other provider of your choice)
-      var cloudmade = new L.TileLayer('http://localhost:3000/tiles/{z}/{x}/{y}.png', {
+      var cloudmade = new L.TileLayer('/tiles/{z}/{x}/{y}.png', {
           attribution: 'Toad of Toad Manor',
           maxZoom: 18
       });
