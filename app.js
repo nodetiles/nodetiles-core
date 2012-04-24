@@ -5,7 +5,7 @@
 // or from datasf.org, reprojected too:
 // ogr2ogr -f GeoJSON sfbay.js sfbay.shp -t_srs EPSG:4326
 
-var Canvas = require('canvas'),
+var Canvas = require('./lib/node-canvas-heroku'),
     Express = require('express'),
     path = require('path'),
     http = require('http'),
