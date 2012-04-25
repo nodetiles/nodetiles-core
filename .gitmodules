@@ -1,3 +1,0 @@
-[submodule "lib/node-canvas-heroku"]
-	path = lib/node-canvas-heroku
-	url = git://github.com/bensheldon/node-canvas-heroku.git
