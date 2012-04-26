@@ -6,11 +6,12 @@
 // ogr2ogr -f GeoJSON sfbay.js sfbay.shp -t_srs EPSG:4326
 
 var Canvas = require('canvas'),
+    Image  = Canvas.Image
     Express = require('express'),
     path = require('path'),
     http = require('http'),
     fs = require('fs'),
-    UTFgrid = require('./lib/utfgrid');
+    UTFGrid = require('./lib/utfgrid');
     
 var port = process.env.PORT || 3000
     
@@ -142,7 +143,7 @@ var renderPath = {
     'LineString': function(l) {
         this.moveTo(l[0][0], l[0][1]);
         l.slice(1).forEach(function(c){
-            this.lineTo(c[0], c[1]);
+            this.lineTo(c[0], c[1]);            
         }, this);
     },
     'MultiPoint': function(p) {
@@ -172,6 +173,7 @@ function renderTile(ctx, zoom, col, row) {
                 if (style.strokeStyle) {
                     ctx.stroke();
                 }
+                ctx.closePath();
             });
         });
     });
@@ -184,8 +186,8 @@ function utfgrid(req, res) {
                         // want to rewrite the transformations yet
   var d = new Date();
   
-  // TODO: clean this up since it's halfway to Express
-  var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
+  // TODO: clean this up since it's halfway to Express.
+  var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, path.extname(req.params.row))];
   console.log(coord);
   if (!coord || coord.length != 3) {
       console.error(req.url, 'not a coord, match =', coord);
@@ -195,16 +197,14 @@ function utfgrid(req, res) {
   }
   
   coord = coord.map(Number);
-  //console.log('got coord', coord);
 
-  var canvas = new Canvas(256,256),
+  var canvas = new Canvas(rasterSize,rasterSize),
       ctx    = canvas.getContext('2d');
   
   // Don't want to blur colors together
   // this is a nice non-standard feature of node-canvas
   ctx.antialias = 'none';
-  // Don't fill the tile
-  // ctx.fillStyle = bgColor;
+  // ctx.fillStyle = '#000000'; // Paint it black
   // ctx.fillRect(0,0,256,256);
 
   // Render our Raster into ctx and return an color->feature index  
@@ -213,62 +213,76 @@ function utfgrid(req, res) {
   console.log('Grid rendering done in', new Date - d, 'ms');
   d = new Date();
   
-  getFeatureFromGridRaster(ctx, colorIndex, x, y);
+  if (path.extname(req.params.row) == '.png') {    
+    res.writeHead(200, {'Content-Type': 'image/png'});    
+    var stream = canvas.createPNGStream(); // createSyncPNGStream(); 
+    stream.on('data', function(chunk){
+        res.write(chunk);
+    });
+    stream.on('end', function() {
+        res.end();
+    });
+    console.log('done');
+    return;
+  }
+  
+  var pixels = ctx.getImageData(0, 0, 256, 256).data; // array of all pixels
 
   var utfgrid = UTFGrid.generate(rasterSize, function (coord) {
     // Use our raster (ctx) and colorIndex to lookup the corresponding feature
     var x = coord.x,
         y = coord.y;
 
-    var imgData = ctx.getImageData(0, 0, 256, 256);
-    var pixels = imgData.data; // array of all pixels
-
     //look up the the rgba values for the pixel at x,y
     // scan rows and columns; each pixel is 4 separate values (R,G,B,A) in the array
     var startPixel = (rasterSize * y + x) * 4;
-    var rgba = pixels.slice(startPixel, startPixel + 3);
+    console.log(startPixel);
+
     // convert those rgba elements to hex then an integer
-    var intColor = h2d(d2h(rgba[0], 2) + d2h(rgba[1], 2) + d2h(rgba(2), 2));
+    var intColor = h2d(d2h(pixels[startPixel], 2) + d2h(pixels[startPixel+1], 2) + d2h(pixels[startPixel+2], 2));
 
-    return colorIndex[intColor]; // returns the feature that's referenced in colorIndex.
+     if (x%64 == 0 && y%64 == 0) {
+       console.log(pixels[startPixel], pixels[startPixel+1], pixels[startPixel+2]);
+     }
+
+     return colorIndex[intColor]; // returns the feature that's referenced in colorIndex.
   });
-
   // send it back to the browser
-  res.send(utfgrid, { 'Content-Type': 'text/json' }, 200);
+  res.send(utfgrid, { 'Content-Type': 'application/json' }, 200);
   console.log('Grid returned in ', new Date - d, 'ms');
-    
 }
 
 // push Features onto the colorIndex array for later lookup
-function renderGrid(ctx, colorIndex, zoom, col, row) {
-  var intColor = 0;
-  colorIndex = []; // reset this global variable just for reminders sake 
-                   // since it needs to line-up with the intColor.
-                   // e.g. intColor of 246 should line up with colorIndex[246]
+function renderGrid(ctx, zoom, col, row) {
+  var intColor = 1; // color zero is black/empty; so start with 1
+  colorIndex = ['']; // make room for black/empty
 
   var sc = Math.pow(2, zoom);
   ctx.scale(sc,sc);
   ctx.translate(-col*256/sc, -row*256/sc);
-  layers.forEach(function(layer, layerIndex {
+  layers.forEach(function(layer, layerIndex) {
     layer.styles.forEach(function(style, styleIndex) {
-        ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
-        layer.features.forEach(function(feature, featureIndex) {
-          ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor, 8) : ''; // only fill in if we have a style defined
-          ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor, 8) : '';
-          
-          ctx.beginPath();
-          var coordinates = feature.geometry.coordinates;
-          renderPath[feature.geometry.type].call(ctx, coordinates);
-          if (ctx.fillStyle) {
-            ctx.fill();
-          }
-          if (ctx.strokeStyle) {
-            ctx.stroke();
-          }
-          
-          colorIndex.push(feature); // this should like up with our colors.
-          intColor++; // Go on to the next color;
-        });
+      ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
+      layer.features.forEach(function(feature, featureIndex) {
+        ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor,6) : ''; // only fill in if we have a style defined
+        ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor,6) : '';
+        
+        //console.log(ctx.fillStyle);
+        
+        ctx.beginPath();
+        var coordinates = feature.geometry.coordinates;
+        renderPath[feature.geometry.type].call(ctx, coordinates);
+        if (ctx.fillStyle) {
+          ctx.fill();
+        }
+        if (ctx.strokeStyle) {
+          ctx.stroke();
+        }
+        ctx.closePath();
+        
+        colorIndex.push(feature); // this should like up with our colors.
+        intColor++; // Go on to the next color;
+      });
     });
   });
   return colorIndex;
@@ -276,12 +290,12 @@ function renderGrid(ctx, colorIndex, zoom, col, row) {
 
 // hex helper functions
 function d2h(d, digits) {
-  d = d.toString(); 
+  d = d.toString(16); 
   while (d.length < digits) {
 		d = '0' + d;
 	}
-  
-  return d.slice(-1 * digits);
+	  
+  return d;
 }
 function h2d(h) {
   return parseInt(h,16);
