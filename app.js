@@ -37,8 +37,14 @@ var bgColor = '#ddddff'; //'#ddddff';
 
 console.log('loading layers...');
 var layers = [ 
-  Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-  Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
+    //Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+    //Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
+    //Layer('./geodata/sf_parcels.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
+    //Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_streets.json', [ { fillStyle: 'rgba(0,0,0,0)', strokeStyle: 'rgba(0,0,0,1)', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255,.2)', lineWidth: 1.0 } ]),
+    //Layer('./geodata/sf_elect_precincts.json', [ { fillStyle: 'rgba(255,255,255, .5)', strokeStyle: 'rgba(0,0,0,.5)', lineWidth: 1.0 } ]),
     
     //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
     //Layer('./datasf/phys_waterbodies.js', [ { fillStyle: '#ddddff' } ]),
@@ -65,7 +71,7 @@ var t = +new Date
 layers.forEach(project.FeatureCollection);
 console.log('done projecting in', new Date - t, 'ms'); 
 
-var canvasPool = [];
+var canvasBacklog = 0;
 
 function tile(req, res) {
 
@@ -73,7 +79,6 @@ function tile(req, res) {
     
     // TODO: clean this up since it's halfway to Express
     var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
-    console.log(coord);
     if (!coord || coord.length != 3) {
         console.error(req.url, 'not a coord, match =', coord);
         res.writeHead(404);
@@ -92,11 +97,11 @@ function tile(req, res) {
     coord = coord.map(Number);
     //console.log('got coord', coord);
 
-    console.log('canvas pool size:', canvasPool.length);
-
-    var canvas = canvasPool.length ? canvasPool.unshift() : new Canvas(256,256),
+    var canvas = new Canvas(256,256),
         ctx = canvas.getContext('2d');
+    canvasBacklog++;
     
+    //ctx.antialias = 'none';
     ctx.fillStyle = bgColor;
     ctx.fillRect(0,0,256,256);
     
@@ -111,10 +116,9 @@ function tile(req, res) {
         res.write(chunk);
     });
     stream.on('end', function() {
-        //console.log('streaming done in', new Date - d, 'ms');
+        console.log('Tile streaming done in', new Date - d, 'ms');
         res.end();
-        // canvasPool.push(canvas);
-        console.log('Returned tile: ' + coord.join('/'));
+        console.log('Returned tile: ' + coord.join('/') + '['+ --canvasBacklog +' more in backlog]');
         done = true;
     });
     stream.on('close', function() {
@@ -172,11 +176,160 @@ function renderData(ctx, zoom, col, row) {
     });
 }
 
+function utfgrid(req, res) {
+
+    var d = new Date();
+    
+    // TODO: clean this up since it's halfway to Express
+    var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
+    console.log(coord);
+    if (!coord || coord.length != 3) {
+        console.error(req.url, 'not a coord, match =', coord);
+        res.writeHead(404);
+        res.end();
+        return;
+    }
+    
+    var done = false;
+    
+    coord = coord.map(Number);
+    //console.log('got coord', coord);
+
+
+    var canvas = new Canvas(256,256),
+        ctx    = canvas.getContext('2d');
+    
+    ctx.antialias = 'none';
+    // Don't fill the tile
+    // ctx.fillStyle = bgColor;
+    // ctx.fillRect(0,0,256,256);
+    
+    renderGrid(ctx, coord[0], coord[1], coord[2]);
+
+    console.log('Grid rendering done in', new Date - d, 'ms');
+    d = new Date();
+    
+    readGrid(ctx);
+
+    
+    
+    // res.writeHead(200, {'Content-Type': 'text/json'});    
+    //res.send('Test');
+    
+    res.writeHead(200, {'Content-Type': 'image/png'});    
+    var stream = canvas.createPNGStream(); // createSyncPNGStream(); 
+    stream.on('data', function(chunk){
+        res.write(chunk);
+    });
+    stream.on('end', function() {
+        console.log('Tile streaming done in', new Date - d, 'ms');
+        res.end();
+        console.log('Returned tile: ' + coord.join('/'));
+        done = true;
+    });
+    stream.on('close', function() {
+        console.log("STREAM CLOSED");
+    });
+    
+    
+    //console.log('Grid streaming done in', new Date - d, 'ms');
+    
+}
+
+function renderGrid(ctx, zoom, col, row) {
+  var intColor = 0;
+
+  var sc = Math.pow(2, zoom);
+  ctx.scale(sc,sc);
+  ctx.translate(-col*256/sc, -row*256/sc);
+  layers.forEach(function(layer, i) {
+    layer.styles.forEach(function(style) {
+        ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
+        layer.features.forEach(function(feature) {
+          ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor, 8) : ''; // only fill in if we have a style defined
+          ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor, 8) : '';
+          
+          ctx.beginPath();
+          var coordinates = feature.geometry.coordinates;
+          renderPath[feature.geometry.type].call(ctx, coordinates);
+          if (ctx.fillStyle) {
+            ctx.fill();
+          }
+          if (ctx.strokeStyle) {
+            ctx.stroke();
+          }
+          intColor++; // Go on to the next color;
+        });
+    });
+  });
+}
+
+function readGrid(ctx) {
+  var intColor = 0;
+  var colorGrid = {};
+  
+  // generate our colors
+  layers.forEach(function(layer, layerIndex) {
+    layer.features.forEach(function(feature, featureIndex) {
+      layer.styles.forEach(function(style, styleIndex) {
+        colorGrid[intColor] = {layer: layerIndex, feature: featureIndex, style: styleIndex};
+        intColor++; // Go on to the next color;
+      });
+    });
+  });
+  
+  var imgd = ctx.getImageData(0, 0, 256, 256);
+  var pix = imgd.data;
+  
+  var grid = {
+        grid: [],
+        keys: [""],
+        data: {}
+      };
+  
+  // Loop over each pixel and invert the color.
+  for (var i = 0, n = pix.length; i < n; i += 4) {
+    if (i === 0) {
+      var gridRow = "";
+    }
+    else if (i % 256*4 === 0) {
+      grid.grid.push(gridRow);
+      var gridRow = "";
+    }
+    gridRow += h2d(d2h(pix[i], 2) + d2h(pix[i+1], 2) + d2h(pix[i+2], 2));
+
+  }
+  grid.grid.push(gridRow); // push our final gridRow
+    
+  console.log(grid);
+}
+
+
+// hex helper functions
+function d2h(d, digits) {
+  d = d.toString(); 
+  while (d.length < digits) {
+		d = '0' + d;
+	}
+  
+  return d.slice(-1 * digits);
+}
+function h2d(h) {
+  return parseInt(h,16);
+}
+
+
+
+
+
+
 var app = Express.createServer();
 
 app.get('/', function(req, res){
   res.send(fs.readFileSync('./views/leaflet.html', 'utf8'));
 });
 app.get('/tiles/:zoom/:col/:row', tile);
+
+app.get('/utfgrids/:zoom/:col/:row', utfgrid);
 
 app.listen(port);
