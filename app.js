@@ -9,7 +9,8 @@ var Canvas = require('canvas'),
     Express = require('express'),
     path = require('path'),
     http = require('http'),
-    fs = require('fs');
+    fs = require('fs'),
+    UTFgrid = require('./lib/utfgrid');
     
 var port = process.env.PORT || 3000
     
@@ -105,7 +106,7 @@ function tile(req, res) {
     ctx.fillStyle = bgColor;
     ctx.fillRect(0,0,256,256);
     
-    renderData(ctx, coord[0], coord[1], coord[2]);
+    renderTile(ctx, coord[0], coord[1], coord[2]);
 
     console.log('rendering done in', new Date - d, 'ms');
     d = new Date();
@@ -152,7 +153,7 @@ var renderPath = {
     }
 };
 
-function renderData(ctx, zoom, col, row) {
+function renderTile(ctx, zoom, col, row) {
     var sc = Math.pow(2, zoom);
     ctx.scale(sc,sc);
     ctx.translate(-col*256/sc, -row*256/sc);
@@ -176,76 +177,82 @@ function renderData(ctx, zoom, col, row) {
     });
 }
 
+/******************* UTFGrid Functions ******************/
+
 function utfgrid(req, res) {
+  var rasterSize = 256; // TODO: I think this should be 64 but I don't
+                        // want to rewrite the transformations yet
+  var d = new Date();
+  
+  // TODO: clean this up since it's halfway to Express
+  var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
+  console.log(coord);
+  if (!coord || coord.length != 3) {
+      console.error(req.url, 'not a coord, match =', coord);
+      res.writeHead(404);
+      res.end();
+      return;
+  }
+  
+  coord = coord.map(Number);
+  //console.log('got coord', coord);
 
-    var d = new Date();
-    
-    // TODO: clean this up since it's halfway to Express
-    var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, '.png')];
-    console.log(coord);
-    if (!coord || coord.length != 3) {
-        console.error(req.url, 'not a coord, match =', coord);
-        res.writeHead(404);
-        res.end();
-        return;
-    }
-    
-    var done = false;
-    
-    coord = coord.map(Number);
-    //console.log('got coord', coord);
+  var canvas = new Canvas(256,256),
+      ctx    = canvas.getContext('2d');
+  
+  // Don't want to blur colors together
+  // this is a nice non-standard feature of node-canvas
+  ctx.antialias = 'none';
+  // Don't fill the tile
+  // ctx.fillStyle = bgColor;
+  // ctx.fillRect(0,0,256,256);
 
+  // Render our Raster into ctx and return an color->feature index  
+  var colorIndex = renderGrid(ctx, coord[0], coord[1], coord[2]);
 
-    var canvas = new Canvas(256,256),
-        ctx    = canvas.getContext('2d');
-    
-    ctx.antialias = 'none';
-    // Don't fill the tile
-    // ctx.fillStyle = bgColor;
-    // ctx.fillRect(0,0,256,256);
-    
-    renderGrid(ctx, coord[0], coord[1], coord[2]);
+  console.log('Grid rendering done in', new Date - d, 'ms');
+  d = new Date();
+  
+  getFeatureFromGridRaster(ctx, colorIndex, x, y);
 
-    console.log('Grid rendering done in', new Date - d, 'ms');
-    d = new Date();
-    
-    readGrid(ctx);
+  var utfgrid = UTFGrid.generate(rasterSize, function (coord) {
+    // Use our raster (ctx) and colorIndex to lookup the corresponding feature
+    var x = coord.x,
+        y = coord.y;
 
-    
-    
-    // res.writeHead(200, {'Content-Type': 'text/json'});    
-    //res.send('Test');
-    
-    res.writeHead(200, {'Content-Type': 'image/png'});    
-    var stream = canvas.createPNGStream(); // createSyncPNGStream(); 
-    stream.on('data', function(chunk){
-        res.write(chunk);
-    });
-    stream.on('end', function() {
-        console.log('Tile streaming done in', new Date - d, 'ms');
-        res.end();
-        console.log('Returned tile: ' + coord.join('/'));
-        done = true;
-    });
-    stream.on('close', function() {
-        console.log("STREAM CLOSED");
-    });
-    
-    
-    //console.log('Grid streaming done in', new Date - d, 'ms');
+    var imgData = ctx.getImageData(0, 0, 256, 256);
+    var pixels = imgData.data; // array of all pixels
+
+    //look up the the rgba values for the pixel at x,y
+    // scan rows and columns; each pixel is 4 separate values (R,G,B,A) in the array
+    var startPixel = (rasterSize * y + x) * 4;
+    var rgba = pixels.slice(startPixel, startPixel + 3);
+    // convert those rgba elements to hex then an integer
+    var intColor = h2d(d2h(rgba[0], 2) + d2h(rgba[1], 2) + d2h(rgba(2), 2));
+
+    return colorIndex[intColor]; // returns the feature that's referenced in colorIndex.
+  });
+
+  // send it back to the browser
+  res.send(utfgrid, { 'Content-Type': 'text/json' }, 200);
+  console.log('Grid returned in ', new Date - d, 'ms');
     
 }
 
-function renderGrid(ctx, zoom, col, row) {
+// push Features onto the colorIndex array for later lookup
+function renderGrid(ctx, colorIndex, zoom, col, row) {
   var intColor = 0;
+  colorIndex = []; // reset this global variable just for reminders sake 
+                   // since it needs to line-up with the intColor.
+                   // e.g. intColor of 246 should line up with colorIndex[246]
 
   var sc = Math.pow(2, zoom);
   ctx.scale(sc,sc);
   ctx.translate(-col*256/sc, -row*256/sc);
-  layers.forEach(function(layer, i) {
-    layer.styles.forEach(function(style) {
+  layers.forEach(function(layer, layerIndex {
+    layer.styles.forEach(function(style, styleIndex) {
         ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
-        layer.features.forEach(function(feature) {
+        layer.features.forEach(function(feature, featureIndex) {
           ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor, 8) : ''; // only fill in if we have a style defined
           ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor, 8) : '';
           
@@ -258,52 +265,14 @@ function renderGrid(ctx, zoom, col, row) {
           if (ctx.strokeStyle) {
             ctx.stroke();
           }
+          
+          colorIndex.push(feature); // this should like up with our colors.
           intColor++; // Go on to the next color;
         });
     });
   });
+  return colorIndex;
 }
-
-function readGrid(ctx) {
-  var intColor = 0;
-  var colorGrid = {};
-  
-  // generate our colors
-  layers.forEach(function(layer, layerIndex) {
-    layer.features.forEach(function(feature, featureIndex) {
-      layer.styles.forEach(function(style, styleIndex) {
-        colorGrid[intColor] = {layer: layerIndex, feature: featureIndex, style: styleIndex};
-        intColor++; // Go on to the next color;
-      });
-    });
-  });
-  
-  var imgd = ctx.getImageData(0, 0, 256, 256);
-  var pix = imgd.data;
-  
-  var grid = {
-        grid: [],
-        keys: [""],
-        data: {}
-      };
-  
-  // Loop over each pixel and invert the color.
-  for (var i = 0, n = pix.length; i < n; i += 4) {
-    if (i === 0) {
-      var gridRow = "";
-    }
-    else if (i % 256*4 === 0) {
-      grid.grid.push(gridRow);
-      var gridRow = "";
-    }
-    gridRow += h2d(d2h(pix[i], 2) + d2h(pix[i+1], 2) + d2h(pix[i+2], 2));
-
-  }
-  grid.grid.push(gridRow); // push our final gridRow
-    
-  console.log(grid);
-}
-
 
 // hex helper functions
 function d2h(d, digits) {
@@ -318,7 +287,7 @@ function h2d(h) {
   return parseInt(h,16);
 }
 
-
+/******************* END UTFGrid Functions ******************/
 
 
 
