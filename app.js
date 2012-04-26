@@ -11,7 +11,8 @@ var Canvas = require('canvas'),
     path = require('path'),
     http = require('http'),
     fs = require('fs'),
-    UTFGrid = require('./lib/utfgrid');
+    UTFGrid = require('./lib/utfgrid'),
+    Extend = require('./lib/extend');
     
 var port = process.env.PORT || 3000
     
@@ -204,8 +205,8 @@ function utfgrid(req, res) {
   // Don't want to blur colors together
   // this is a nice non-standard feature of node-canvas
   ctx.antialias = 'none';
-  // ctx.fillStyle = '#000000'; // Paint it black
-  // ctx.fillRect(0,0,256,256);
+  ctx.fillStyle = '#000000'; // Paint it black
+  ctx.fillRect(0,0,256,256);
 
   // Render our Raster into ctx and return an color->feature index  
   var colorIndex = renderGrid(ctx, coord[0], coord[1], coord[2]);
@@ -228,7 +229,7 @@ function utfgrid(req, res) {
   
   var pixels = ctx.getImageData(0, 0, 256, 256).data; // array of all pixels
 
-  var utfgrid = UTFGrid.generate(rasterSize, function (coord) {
+  var utfgrid = (new UTFGrid(rasterSize, function (coord) {
     // Use our raster (ctx) and colorIndex to lookup the corresponding feature
     var x = coord.x,
         y = coord.y;
@@ -236,19 +237,24 @@ function utfgrid(req, res) {
     //look up the the rgba values for the pixel at x,y
     // scan rows and columns; each pixel is 4 separate values (R,G,B,A) in the array
     var startPixel = (rasterSize * y + x) * 4;
-    console.log(startPixel);
 
     // convert those rgba elements to hex then an integer
     var intColor = h2d(d2h(pixels[startPixel], 2) + d2h(pixels[startPixel+1], 2) + d2h(pixels[startPixel+2], 2));
 
-     if (x%64 == 0 && y%64 == 0) {
-       console.log(pixels[startPixel], pixels[startPixel+1], pixels[startPixel+2]);
-     }
-
      return colorIndex[intColor]; // returns the feature that's referenced in colorIndex.
-  });
+  })).encodeAsObject();
+  
+  console.log(utfgrid);
+  
+  for(var featureId in utfgrid.data) {
+    var newFeature = {};
+    Extend(true, newFeature, utfgrid.data[featureId]);
+    delete newFeature.geometry;
+    utfgrid.data[featureId] = newFeature; 
+  }
+  
   // send it back to the browser
-  res.send(utfgrid, { 'Content-Type': 'application/json' }, 200);
+  res.send(JSON.stringify(utfgrid), { 'Content-Type': 'application/json' }, 200);
   console.log('Grid returned in ', new Date - d, 'ms');
 }
 
