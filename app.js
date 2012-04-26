@@ -42,9 +42,9 @@ var layers = [
     //Layer('./geodata/sf_parcels.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
     //Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
     Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_streets.json', [ { fillStyle: 'rgba(0,0,0,0)', strokeStyle: 'rgba(0,0,0,1)', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255,.2)', lineWidth: 1.0 } ]),
-    //Layer('./geodata/sf_elect_precincts.json', [ { fillStyle: 'rgba(255,255,255, .5)', strokeStyle: 'rgba(0,0,0,.5)', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
+    //Layer('./geodata/sf_elect_precincts.json', [ { strokeStyle: 'rgba(255,0,200,.8)', lineWidth: 1.0 } ]),
     
     //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
     //Layer('./datasf/phys_waterbodies.js', [ { fillStyle: '#ddddff' } ]),
