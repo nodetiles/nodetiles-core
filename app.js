@@ -183,7 +183,7 @@ function renderTile(ctx, zoom, col, row) {
 /******************* UTFGrid Functions ******************/
 
 function utfgrid(req, res) {
-  var rasterSize = 256; // TODO: I think this should be 64 but I don't
+  var rasterSize = 64; // TODO: I think this should be 64 but I don't
                         // want to rewrite the transformations yet
   var d = new Date();
   
@@ -206,7 +206,7 @@ function utfgrid(req, res) {
   // this is a nice non-standard feature of node-canvas
   ctx.antialias = 'none';
   ctx.fillStyle = '#000000'; // Paint it black
-  ctx.fillRect(0,0,256,256);
+  ctx.fillRect(0,0,64,64);
 
   // Render our Raster into ctx and return an color->feature index  
   var colorIndex = renderGrid(ctx, coord[0], coord[1], coord[2]);
@@ -227,7 +227,7 @@ function utfgrid(req, res) {
     return;
   }
   
-  var pixels = ctx.getImageData(0, 0, 256, 256).data; // array of all pixels
+  var pixels = ctx.getImageData(0, 0, 64, 64).data; // array of all pixels
 
   var utfgrid = (new UTFGrid(rasterSize, function (coord) {
     // Use our raster (ctx) and colorIndex to lookup the corresponding feature
@@ -263,9 +263,9 @@ function renderGrid(ctx, zoom, col, row) {
   var intColor = 1; // color zero is black/empty; so start with 1
   colorIndex = ['']; // make room for black/empty
 
-  var sc = Math.pow(2, zoom);
+  var sc = Math.pow(2, zoom - 2);
   ctx.scale(sc,sc);
-  ctx.translate(-col*256/sc, -row*256/sc);
+  ctx.translate(-col*64/sc, -row*64/sc);
   layers.forEach(function(layer, layerIndex) {
     layer.styles.forEach(function(style, styleIndex) {
       ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
