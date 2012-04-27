@@ -2,8 +2,9 @@
   "name": "nodetiles",
   "version": "0.0.1",
   "engines": {
-      "node": ">= 0.6.0 < 0.7.0"
-  }
+    "node": "0.6.x",
+    "npm":  "1.1.x"
+  },
   "dependencies": {
     "connect" : "2.x",
     "express": ">= 0.0.1",
