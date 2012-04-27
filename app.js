@@ -6,7 +6,7 @@
 // ogr2ogr -f GeoJSON sfbay.js sfbay.shp -t_srs EPSG:4326
 
 var Canvas = require('canvas'),
-    Image  = Canvas.Image
+    Connect = require('connect'),
     Express = require('express'),
     path = require('path'),
     http = require('http'),
@@ -45,8 +45,8 @@ var layers = [
     //Layer('./geodata/sf_parcels.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
     //Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
     Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),
     Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
+    Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),
     //Layer('./geodata/sf_elect_precincts.json', [ { strokeStyle: 'rgba(255,0,200,.8)', lineWidth: 1.0 } ]),
     
     //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
@@ -247,14 +247,14 @@ function utfgrid(req, res) {
   console.log(utfgrid);
   
   for(var featureId in utfgrid.data) {
-    var newFeature = {};
-    Extend(true, newFeature, utfgrid.data[featureId]);
-    delete newFeature.geometry;
-    utfgrid.data[featureId] = newFeature; 
+    // var newFeature = {};
+    // Extend(true, newFeature, utfgrid.data[featureId]);
+    // delete newFeature.geometry;
+    utfgrid.data[featureId] = utfgrid.data[featureId].properties; 
   }
   
-  // send it back to the browser
-  res.send(JSON.stringify(utfgrid), { 'Content-Type': 'application/json' }, 200);
+  // send it back to the browser as JSONP
+  res.send('grid(' + JSON.stringify(utfgrid) + ')', { 'Content-Type': 'application/json' }, 200);
   console.log('Grid returned in ', new Date - d, 'ms');
 }
 
@@ -314,8 +314,13 @@ function h2d(h) {
 
 var app = Express.createServer();
 
+app.use(Connect.compress()); // compression
+
 app.get('/', function(req, res){
   res.send(fs.readFileSync('./views/leaflet.html', 'utf8'));
+});
+app.get('/sf_tile.jsonp', function(req, res){
+  res.send(fs.readFileSync('./views/sf_tile.jsonp', 'utf8'));
 });
 app.get('/tiles/:zoom/:col/:row', tile);
 
