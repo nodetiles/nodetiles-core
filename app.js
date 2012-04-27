@@ -243,9 +243,7 @@ function utfgrid(req, res) {
 
      return colorIndex[intColor]; // returns the feature that's referenced in colorIndex.
   })).encodeAsObject();
-  
-  console.log(utfgrid);
-  
+    
   for(var featureId in utfgrid.data) {
     // var newFeature = {};
     // Extend(true, newFeature, utfgrid.data[featureId]);
