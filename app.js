@@ -265,30 +265,33 @@ function renderGrid(ctx, zoom, col, row) {
   ctx.scale(sc,sc);
   ctx.translate(-col*64/sc, -row*64/sc);
   layers.forEach(function(layer, layerIndex) {
-    layer.styles.forEach(function(style, styleIndex) {
-      ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
-      layer.features.forEach(function(feature, featureIndex) {
-        ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor,6) : ''; // only fill in if we have a style defined
-        ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor,6) : '';
+    if (layerIndex != 0) { // TODO: make some way to configure which layers become UTFgrids
+      layer.styles.forEach(function(style, styleIndex) {
+        ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
+        layer.features.forEach(function(feature, featureIndex) {
+          ctx.fillStyle = style.fillStyle ? '#'+d2h(intColor,6) : ''; // only fill in if we have a style defined
+          ctx.strokeStyle = style.strokeStyle ? '#'+d2h(intColor,6) : '';
         
-        //console.log(ctx.fillStyle);
+          //console.log(ctx.fillStyle);
         
-        ctx.beginPath();
-        var coordinates = feature.geometry.coordinates;
-        renderPath[feature.geometry.type].call(ctx, coordinates);
-        if (ctx.fillStyle) {
-          ctx.fill();
-        }
-        if (ctx.strokeStyle) {
-          ctx.stroke();
-        }
-        ctx.closePath();
+          ctx.beginPath();
+          var coordinates = feature.geometry.coordinates;
+          renderPath[feature.geometry.type].call(ctx, coordinates);
+          if (ctx.fillStyle) {
+            ctx.fill();
+          }
+          if (ctx.strokeStyle) {
+            ctx.stroke();
+          }
+          ctx.closePath();
         
-        colorIndex.push(feature); // this should like up with our colors.
-        intColor++; // Go on to the next color;
+          colorIndex.push(feature); // this should like up with our colors.
+          intColor++; // Go on to the next color;
+        });
       });
-    });
+   }
   });
+  
   return colorIndex;
 }
 
