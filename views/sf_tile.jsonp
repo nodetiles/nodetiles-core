@@ -1,0 +1,18 @@
+grid({
+    basename: "sf_tile.bentiles",
+    bounds: [ - 180, -85.05112877980659, 180, 85.05112877980659],
+    center: [0, 0, 4],
+    description: "Lovingly crafted with Node and node-canvas.",
+    filesize: 134727680,
+    grids: ["/utfgrids/{z}/{x}/{y}.json", "/utfgrids/{z}/{x}/{y}.json", "/utfgrids/{z}/{x}/{y}.json", "/utfgrids/{z}/{x}/{y}.json"],
+    id: "map",
+    legend: "<div style=\"text-align:center;\"><div style=\"font:12pt/16pt Georgia,serif;\">San Francisco</div><div style=\"font:italic 10pt/16pt Georgia,serif;\">by Ben and Rob</div></div>",
+    maxzoom: 20,
+    minzoom: 12,
+    name: "San Francisco",
+    scheme: "xyz",
+    template: "{{#__location__}}{{/__location__}}{{#__teaser__}}<div style=\"text-align:center;\"><strong>{{STREET}}{{map_park_n}}</strong></div>{{/__teaser__}}{{#__full__}}{{/__full__}}",
+    tiles: ["/tiles/{z}/{x}/{y}.png", "/tiles/{z}/{x}/{y}.png", "/tiles/{z}/{x}/{y}.png", "/tiles/{z}/{x}/{y}.png"],
+    version: "1.0.0",
+    webpage: "http://tiles.mapbox.com/mapbox/map/geography-class"
+})
