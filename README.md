@@ -1,5 +1,7 @@
-NodeTile
-=============
+NodeTile: Occupy Map
+====================
+
+_This is a proof-of-concept map of Occupy sites based on data from [Chris Herwig's CartoSyling/Occupy Streets project](https://github.com/kleinjos/carto-styling/tree/master/occupy-streets)._
 
 This is a dirty hack to do server-side map tile rendering using geojson/shapefiles. Map tiles are rendered using node-canvas--a [special version](https://github.com/bensheldon/node-canvas-heroku) that includes a pre-compiled Cairo binary that works on Heroku--and requested via a standard leaflet map. This demo currently renders Baltimore neighbrhoods.
 
@@ -12,8 +14,9 @@ Installation on Heroku
 2. Within the directory, `heroku create --stack cedar`
 3. Setup your heroku environment variables for node-canvas-heroku
    
-   `$ heroku config:add LD_PRELOAD='/app/node_modules/canvas/cairo/libcairo.so /app/node_modules/canvas/lib/libpixman-1.so.0 /app/node_modules/canvas/lib/libfreetype.so.6' --app <your-app>
-   $ heroku config:add LD_LIBRARY_PATH=/app/node_modules/canvas/cairo --app <your-app>`
+        $ heroku config:add LD_PRELOAD='/app/node_modules/canvas/cairo/libcairo.so /app/node_modules/canvas/lib/libpixman-1.so.0 /app/node_modules/canvas/lib/libfreetype.so.6' --app <your-app>
+
+        $ heroku config:add LD_LIBRARY_PATH=/app/node_modules/canvas/cairo --app <your-app>
    
    IMPORTANT: replace the `<your-app>` at the end of each command with your Heroku app's name, e.g. 'furious-sparrow-2089'
 4. `git push heroku master`
@@ -36,6 +39,9 @@ Within the `/geodata` directory are GEOjson files from the [datasf.of](https://d
 
 And some others, including world outlines from [Natural Earth](http://www.naturalearthdata.com/).
 
+Contact
+-------
 
+Email me at bensheldon@gmail.com or open an issue.
 
 

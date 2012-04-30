@@ -44,9 +44,11 @@ var layers = [
     //Layer('./geodata/baltimore-boundaries.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
     //Layer('./geodata/sf_parcels.json', [ { fillStyle: 'rgba(0,0,0,.5)', strokeStyle: 'rgba(255,255,255,.8)', lineWidth: 1.0 } ]),
     //Layer('./geodata/10m_land.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),
+    // Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+    // Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
+    // Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),// Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ]),
+     Layer('./geodata/occupy.json', [ { fillStyle: 'rgba(200,0,0,1)', strokeStyle: 'rgba(255,100,100,.9)', lineWidth: 3.0 } ]),
+    
     //Layer('./geodata/sf_elect_precincts.json', [ { strokeStyle: 'rgba(255,0,200,.8)', lineWidth: 1.0 } ]),
     
     //Layer('./datasf/sflnds_parks.js', [ { fillStyle: '#ddffdd' } ]),
@@ -105,8 +107,8 @@ function tile(req, res) {
     canvasBacklog++;
     
     //ctx.antialias = 'none';
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0,0,256,256);
+    //ctx.fillStyle = bgColor;
+    //ctx.fillRect(0,0,256,256);
     
     renderTile(ctx, coord[0], coord[1], coord[2]);
 
@@ -150,8 +152,10 @@ var renderPath = {
     'MultiPoint': function(p) {
         console.warn('MultiPoint geometry not implemented in renderPath');
     },
-    'Point': function(p) {
-        console.warn('Point geometry not implemented in renderPath');
+    'Point': function(p, scale) {
+        //console.warn('Point geometry not implemented in renderPath');
+        this.arc(p[0],p[1],8/scale,0,Math.PI*2,true)
+        //`this.rect(p[0], p[1], 2, 2);
     }
 };
 
@@ -167,7 +171,7 @@ function renderTile(ctx, zoom, col, row) {
             layer.features.forEach(function(feature) {
                 ctx.beginPath();
                 var coordinates = feature.geometry.coordinates;
-                renderPath[feature.geometry.type].call(ctx, coordinates);
+                renderPath[feature.geometry.type].call(ctx, coordinates, sc);
                 if (style.fillStyle) {
                     ctx.fill();
                 }
@@ -189,7 +193,6 @@ function utfgrid(req, res) {
   
   // TODO: clean this up since it's halfway to Express.
   var coord = [req.params.zoom, req.params.col, path.basename(req.params.row, path.extname(req.params.row))];
-  console.log(coord);
   if (!coord || coord.length != 3) {
       console.error(req.url, 'not a coord, match =', coord);
       res.writeHead(404);
@@ -265,7 +268,6 @@ function renderGrid(ctx, zoom, col, row) {
   ctx.scale(sc,sc);
   ctx.translate(-col*64/sc, -row*64/sc);
   layers.forEach(function(layer, layerIndex) {
-    if (layerIndex != 0) { // TODO: make some way to configure which layers become UTFgrids
       layer.styles.forEach(function(style, styleIndex) {
         ctx.lineWidth = 'lineWidth' in style ? style.lineWidth / sc : 1.0 / sc;
         layer.features.forEach(function(feature, featureIndex) {
@@ -276,7 +278,7 @@ function renderGrid(ctx, zoom, col, row) {
         
           ctx.beginPath();
           var coordinates = feature.geometry.coordinates;
-          renderPath[feature.geometry.type].call(ctx, coordinates);
+          renderPath[feature.geometry.type].call(ctx, coordinates, sc);
           if (ctx.fillStyle) {
             ctx.fill();
           }
@@ -289,7 +291,6 @@ function renderGrid(ctx, zoom, col, row) {
           intColor++; // Go on to the next color;
         });
       });
-   }
   });
   
   return colorIndex;
