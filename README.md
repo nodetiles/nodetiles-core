@@ -27,6 +27,11 @@ Local Development
 
 For local development, you need to install node-canvas manually and from the normal source (NOT node-canvas-heroku): npm install` node-canvas`. Then just run `node app.js`.
 
+How it works / How to modify it
+-------------------------------
+
+This application renders PNG map tiles as well as UTFGrid interaction tiles from static geojson files (though it would be relatively trivial to load geojson from a live database instead). Those geojson are loaded into the `Layers` list along with some basic style settings. When a specific tile is requested, a new canvas is created and the Layers, then Features are stepped through and drawn to a canvas, which is then streamed back to the requesting client as a PNG. UTFGrids are rendered in much the same way: they are drawn as a raster where each feature is assigned a unique RGB value; the resulting raster is then read out to create a UTFGrid.
+
 Shapefiles
 ----------
 
