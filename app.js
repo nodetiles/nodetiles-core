@@ -278,7 +278,7 @@ function renderGrid(ctx, zoom, col, row) {
         
           ctx.beginPath();
           var coordinates = feature.geometry.coordinates;
-          renderPath[feature.geometry.type].call(ctx, coordinates, sc);
+          renderPath[feature.geometry.type].call(ctx, coordinates, Math.pow(2, zoom)); // TODO :Clean up the scaling
           if (ctx.fillStyle) {
             ctx.fill();
           }
