@@ -1,4 +1,4 @@
-NodeTile
+NodeTiles
 =============
 
 This is a dirty hack to do server-side map tile rendering using geojson/shapefiles. Map tiles are rendered using node-canvas--a [special version](https://github.com/bensheldon/node-canvas-heroku) that includes a pre-compiled Cairo binary that works on Heroku--and requested via a standard leaflet map. This demo currently renders Baltimore neighbrhoods.
