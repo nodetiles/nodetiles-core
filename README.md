@@ -24,6 +24,8 @@ Local Development
 
 For local development, you need to install node-canvas manually and from the normal source (NOT node-canvas-heroku): `npm install canvas`. Then just run `node app.js`.
 
+*(Note that to install node-canvas you'll need to comment out the line in package.json that redirects it to node-canvas-heroku.)*
+
 Shapefiles
 ----------
 
