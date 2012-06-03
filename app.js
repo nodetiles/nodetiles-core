@@ -147,11 +147,14 @@ var renderPath = {
             this.lineTo(c[0], c[1]);            
         }, this);
     },
-    'MultiPoint': function(p) {
-        console.warn('MultiPoint geometry not implemented in renderPath');
+    'MultiPoint': function(p, scale) {
+        // Can't use forEach here because we need to pass scale along
+        for (var i = 0, len = p.length; i < len; i++) {
+          renderPath.Point.call(this, p[i], scale);
+        }
     },
-    'Point': function(p) {
-        console.warn('Point geometry not implemented in renderPath');
+    'Point': function(p, scale) {
+        this.arc(p[0], p[1], 8 / scale, 0, Math.PI * 2, true);
     }
 };
 
@@ -167,7 +170,7 @@ function renderTile(ctx, zoom, col, row) {
             layer.features.forEach(function(feature) {
                 ctx.beginPath();
                 var coordinates = feature.geometry.coordinates;
-                renderPath[feature.geometry.type].call(ctx, coordinates);
+                renderPath[feature.geometry.type].call(ctx, coordinates, sc);
                 if (style.fillStyle) {
                     ctx.fill();
                 }
@@ -276,7 +279,7 @@ function renderGrid(ctx, zoom, col, row) {
         
           ctx.beginPath();
           var coordinates = feature.geometry.coordinates;
-          renderPath[feature.geometry.type].call(ctx, coordinates);
+          renderPath[feature.geometry.type].call(ctx, coordinates, Math.pow(2, zoom)); // TODO :Clean up the scaling
           if (ctx.fillStyle) {
             ctx.fill();
           }
