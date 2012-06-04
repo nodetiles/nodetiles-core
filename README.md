@@ -22,9 +22,9 @@ Installation on Heroku
 Local Development
 -----------------
 
-For local development, you need to install node-canvas manually and from the normal source (NOT node-canvas-heroku): `npm install canvas`. Then just run `node app.js`.
+For local development, use `npm install --dev`, which will install node-canvas instead of node-canvas-heroku.
 
-*(Note that to install node-canvas you'll need to comment out the line in package.json that redirects it to node-canvas-heroku.)*
+*Note: node-canvas requires Cairo, which you will need to install separately.*
 
 How it works / How to modify it
 -------------------------------

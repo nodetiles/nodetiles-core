@@ -9,5 +9,8 @@
     "connect" : "2.x",
     "express": ">= 0.0.1",
     "canvas": "git://github.com/bensheldon/node-canvas-heroku.git"
+  },
+  "devDependencies": {
+    "canvas": "git://github.com/LearnBoost/node-canvas.git"
   }
 }
