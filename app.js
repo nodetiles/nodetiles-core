@@ -320,11 +320,11 @@ var app = Express.createServer();
 
 app.use(Connect.compress()); // compression
 
-app.get('/', function(req, res){
-  res.send(fs.readFileSync('./views/leaflet.html', 'utf8'));
+app.get('/', function(req, res) {
+  res.sendfile('./views/leaflet.html');
 });
-app.get('/sf_tile.jsonp', function(req, res){
-  res.send(fs.readFileSync('./views/sf_tile.jsonp', 'utf8'));
+app.get('/sf_tile.jsonp', function(req, res) {
+  res.sendfile('./views/sf_tile.jsonp');
 });
 app.get('/tiles/:zoom/:col/:row', tile);
 
