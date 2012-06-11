@@ -113,19 +113,14 @@ function tile(req, res) {
     console.log('rendering done in', new Date - d, 'ms');
     d = new Date();
     
-    res.writeHead(200, {'Content-Type': 'image/png'});    
-    var stream = canvas.createPNGStream(); // createSyncPNGStream(); 
-    stream.on('data', function(chunk){
-        res.write(chunk);
-    });
+    res.writeHead(200, {'Content-Type': 'image/png'});  
+    var stream = canvas.createPNGStream(); // createSyncPNGStream();
+    stream.pipe(res);
+    
     stream.on('end', function() {
         console.log('Tile streaming done in', new Date - d, 'ms');
-        res.end();
         console.log('Returned tile: ' + coord.join('/') + '['+ --canvasBacklog +' more in backlog]');
         done = true;
-    });
-    stream.on('close', function() {
-        console.log("STREAM CLOSED");
     });
 }
 
@@ -220,12 +215,7 @@ function utfgrid(req, res) {
   if (path.extname(req.params.row) == '.png') {    
     res.writeHead(200, {'Content-Type': 'image/png'});    
     var stream = canvas.createPNGStream(); // createSyncPNGStream(); 
-    stream.on('data', function(chunk){
-        res.write(chunk);
-    });
-    stream.on('end', function() {
-        res.end();
-    });
+    stream.pipe(res);
     console.log('done');
     return;
   }
