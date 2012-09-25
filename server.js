@@ -13,7 +13,7 @@ var projector = require('./projector');
 var tileRenderer = require('./tileRenderer');
 
 // App configuration
-var app = Express.createServer();
+var app = Express();
 app.use(Connect.compress());
 
 // initialize
