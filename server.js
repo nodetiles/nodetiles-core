@@ -7,40 +7,79 @@ var DEBUG = true;
 var path = require('path');
 var http = require('http');
 var fs = require('fs');
-var Connect = require('connect');
 var Express = require('express');
 var projector = require('./projector');
 var tileRenderer = require('./tileRenderer');
 var Map = require('./lib/Map');
+var GeoJsonSource = require('./datasources/GeoJson');
 
 // App configuration
 var app = Express();
-app.use(Connect.compress());
-app.use('/static/', Connect.static(__dirname + '/static'));
+app.use(Express.compress());
+app.use('/static/', Express.static(__dirname + '/static'));
 
-// initialize
-function Layer(filename, styles) {
-    var data = JSON.parse(fs.readFileSync(filename, 'utf8'));
-    data.styles = styles;
-    return data;
-};
+// // initialize
+// function Layer(filename, styles) {
+//     var data = JSON.parse(fs.readFileSync(filename, 'utf8'));
+//     data.styles = styles;
+//     return data;
+// };
+// 
+// console.log("Loading layers...");
+// var start = Date.now();
+// var layers = [ 
+//     Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
+//     Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
+//     Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ])
+// ];
+// console.log("Loaded in " + (Date.now() - start) + "ms");
+// console.log("Projecting features...");
+// start = Date.now();
+// layers.forEach(projector.project.FeatureCollection);
+// console.log("Projected in " + (Date.now() - start) + "ms");
 
-console.log("Loading layers...");
-var start = Date.now();
-var layers = [ 
-    Layer('./geodata/sf_shore.json', [ { fillStyle: '#ffffee', strokeStyle: '#888', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_parks.json', [ { fillStyle: 'rgba(0,255,0,.5)', strokeStyle: 'rgba(255,255,255, .5)', lineWidth: 1.0 } ]),
-    Layer('./geodata/sf_streets.json', [ { strokeStyle: 'rgba(0,0,0,.8)', lineWidth: 1.0 } ])
+var styles = [
+  {
+    selector: {
+      source: "sf_shore"
+    },
+    properties: {
+      fillStyle: '#ffffee',
+      strokeStyle: '#888',
+      lineWidth: 1.0
+    }
+  },
+  
+  {
+    selector: {
+      source: "sf_parks"
+    },
+    properties: {
+      fillStyle: 'rgba(0,255,0,.5)',
+      strokeStyle: 'rgba(255,255,255, .5)',
+      lineWidth: 1.0
+    }
+  },
+  
+  {
+    selector: {
+      source: "sf_streets"
+    },
+    properties: {
+      strokeStyle: 'rgba(0,0,0,.8)',
+      lineWidth: 1.0
+    }
+  },
 ];
-console.log("Loaded in " + (Date.now() - start) + "ms");
-console.log("Projecting features...");
-start = Date.now();
-layers.forEach(projector.project.FeatureCollection);
-console.log("Projected in " + (Date.now() - start) + "ms");
 
 // just use one map for everything
 var map = new Map();
-map.addData(function() { return layers });
+// map.addData(function() { return layers });
+// map.addData(function(x1, y1, x2, y2, projection, callback) { callback(null, layers); });
+map.addData(new GeoJsonSource(__dirname + "/geodata/sf_shore.json"));
+map.addData(new GeoJsonSource(__dirname + "/geodata/sf_parks.json"));
+map.addData(new GeoJsonSource(__dirname + "/geodata/sf_streets.json"));
+map.addStyle(styles);
 
 
 // views
