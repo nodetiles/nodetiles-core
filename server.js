@@ -16,6 +16,7 @@ var Map = require('./lib/Map');
 // App configuration
 var app = Express();
 app.use(Connect.compress());
+app.use('/static/', Connect.static(__dirname + '/static'));
 
 // initialize
 function Layer(filename, styles) {
