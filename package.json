@@ -1,17 +1,34 @@
 {
   "name": "nodetiles",
   "version": "0.0.1",
+  "description": "Joyful map rendering with Node.js.",
+  "contributors": [ 
+    {
+      "name": "Rob Bracket",
+      "email": "rob@codeforamerica.org"
+    },
+    {
+      "name": "Ben Sheldon",
+      "email": "ben@codeforamerica.org"
+    }, 
+    {
+      "name": "Alex Yule",
+      "email": "alexy@codeforamerica.org"
+    }
+  ],
   "engines": {
-    "node": "0.6.x",
+    "node": ">0.6.x",
     "npm":  "1.1.x"
   },
   "dependencies": {
-    "connect" : "2.x",
-    "express": ">= 0.0.1",
-    "async": "~0.1.22",
-    "canvas": "git://github.com/bensheldon/node-canvas-heroku.git"
+    "express": "3.x",
+    "async": "~0.1.x",
+    "canvas": "0.12.x"
   },
   "devDependencies": {
-    "canvas": "git://github.com/LearnBoost/node-canvas.git"
+    "canvas": "0.13.x",
+    "mocha":  "~1.4.1",
+    "chai": "~1.2.0",
+    "sinon": "~1.4.2"
   }
 }
