@@ -11,6 +11,7 @@ var Connect = require('connect');
 var Express = require('express');
 var projector = require('./projector');
 var tileRenderer = require('./tileRenderer');
+var Map = require('./lib/Map');
 
 // App configuration
 var app = Express();
@@ -35,6 +36,11 @@ console.log("Projecting features...");
 start = Date.now();
 layers.forEach(projector.project.FeatureCollection);
 console.log("Projected in " + (Date.now() - start) + "ms");
+
+// just use one map for everything
+var map = new Map();
+map.addData(function() { return layers });
+
 
 // views
 app.get('/', function(req, res) {
@@ -67,7 +73,16 @@ app.get('/tiles/:zoom/:col/:row', function tile(req, res) {
   console.log('Requested tile: ' + tileCoordinate.join('/'));
   
   tileCoordinate = tileCoordinate.map(Number);
-  tileRenderer.renderImage(tileCoordinate[0], tileCoordinate[1], tileCoordinate[2], layers, function(err, canvas) {
+  
+  // turn tile coordinates into lat/longs
+  // TODO: custom TileMap class or tools for this
+  var scale = Math.pow(2, tileCoordinate[0]);
+  var minX = 256 * tileCoordinate[1] / scale;
+  var minY = 256 * tileCoordinate[2] / scale;
+  var maxX = minX + 256 / scale;
+  var maxY = minY + 256 / scale;
+  
+  map.render(minX, minY, maxX, maxY, 256, 256, function(error, canvas) {
     var stream = canvas.createPNGStream();
     stream.pipe(res);
   });
