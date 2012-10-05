@@ -1,0 +1,33 @@
+[
+  {
+    "selector": {
+      "source": "sf_shore"
+    },
+    "properties": {
+      "fillStyle": "#ffffee",
+      "strokeStyle": "#888",
+      "lineWidth": 1.0
+    }
+  },
+  
+  {
+    "selector": {
+      "source": "sf_parks"
+    },
+    "properties": {
+      "fillStyle": "rgba(0,255,0,.5)",
+      "strokeStyle": "rgba(255,255,255, .5)",
+      "lineWidth": 1.0
+    }
+  },
+  
+  {
+    "selector": {
+      "source": "sf_streets"
+    },
+    "properties": {
+      "strokeStyle": "rgba(0,0,0,.8)",
+      "lineWidth": 1.0
+    }
+  }
+]

@@ -13,40 +13,6 @@ var app = Express();
 app.use(Express.compress());
 app.use('/static/', Express.static(__dirname + '/static'));
 
-var styles = [
-  {
-    selector: {
-      source: "sf_shore"
-    },
-    properties: {
-      fillStyle: '#ffffee',
-      strokeStyle: '#888',
-      lineWidth: 1.0
-    }
-  },
-  
-  {
-    selector: {
-      source: "sf_parks"
-    },
-    properties: {
-      fillStyle: 'rgba(0,255,0,.5)',
-      strokeStyle: 'rgba(255,255,255, .5)',
-      lineWidth: 1.0
-    }
-  },
-  
-  {
-    selector: {
-      source: "sf_streets"
-    },
-    properties: {
-      strokeStyle: 'rgba(0,0,0,.8)',
-      lineWidth: 1.0
-    }
-  },
-];
-
 // just use one map for everything
 var map = new Map();
 // map.addData(function() { return layers });
@@ -54,7 +20,7 @@ var map = new Map();
 map.addData(new GeoJsonSource(__dirname + '/geodata/sf_shore.json'));
 map.addData(new GeoJsonSource(__dirname + '/geodata/sf_parks.json'));
 map.addData(new GeoJsonSource(__dirname + '/geodata/sf_streets.json'));
-map.addStyle(styles);
+map.addStyle(require('./sf_styles'));
 
 
 // views
