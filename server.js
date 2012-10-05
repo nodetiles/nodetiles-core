@@ -90,7 +90,6 @@ app.get('/tiles/:zoom/:col/:row', function tile(req, res) {
 
 // app.get('/utfgrids/:zoom/:col/:row', utfgrid);
 app.get('/utfgrids/:zoom/:col/:row.:format?', function utfgrid(req, res) {
-  console.log(req.params);
   // TODO: clean this up since it's halfway to Express
   // TODO: handle no extension and non-png extensions
   // verify arguments
@@ -102,7 +101,7 @@ app.get('/utfgrids/:zoom/:col/:row.:format?', function utfgrid(req, res) {
       return;
   }
   
-  console.log('Requested tile: ' + tileCoordinate.join('/'));
+  console.log('Requested grid: ' + tileCoordinate.join('/'));
   
   tileCoordinate = tileCoordinate.map(Number);
   var respondWithImage = req.params.format === 'png';
@@ -120,8 +119,19 @@ app.get('/utfgrids/:zoom/:col/:row.:format?', function utfgrid(req, res) {
       res.send('grid(' + JSON.stringify(grid) + ')', { 'Content-Type': 'application/json' }, 200);
     };
   }
-  tileRenderer.renderGrid(tileCoordinate[0], tileCoordinate[1], tileCoordinate[2], layers, renderHandler, respondWithImage);
+  // tileRenderer.renderGrid(tileCoordinate[0], tileCoordinate[1], tileCoordinate[2], layers, renderHandler, respondWithImage);
+  
+  // turn tile coordinates into lat/longs
+  // TODO: custom TileMap class or tools for this
+  var scale = Math.pow(2, tileCoordinate[0] - 2);
+  var minX = 64 * tileCoordinate[1] / scale;
+  var minY = 64 * tileCoordinate[2] / scale;
+  var maxX = minX + 64 / scale;
+  var maxY = minY + 64 / scale;
+  
+  map.renderGrid(minX, minY, maxX, maxY, 64, 64, respondWithImage, renderHandler);
 });
+
 
 
 
