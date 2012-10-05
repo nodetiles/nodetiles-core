@@ -8,6 +8,7 @@
   "dependencies": {
     "connect" : "2.x",
     "express": ">= 0.0.1",
+    "async": "~0.1.22",
     "canvas": "git://github.com/bensheldon/node-canvas-heroku.git"
   },
   "devDependencies": {
