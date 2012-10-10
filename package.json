@@ -23,7 +23,8 @@
   "dependencies": {
     "express": "3.x",
     "async": "~0.1.x",
-    "canvas": "0.12.x"
+    "canvas": "0.12.x",
+    "pg":"~0.8.4"
   },
   "devDependencies": {
     "canvas": "0.13.x",
