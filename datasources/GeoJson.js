@@ -1,9 +1,11 @@
 var fs = require("fs");
 var projector = require("../projector");
 
-module.exports = function(path, encoding) {
+module.exports = function(path, projection, encoding) {
   encoding = encoding || "utf8";
-  
+  projection = projection || "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
+
+ 
   // loading synchronization
   var loadCallbacks = [];
   var loading = false;
@@ -13,7 +15,7 @@ module.exports = function(path, encoding) {
   var data = null;
   
   // TODO: project data properly
-  var source = function GeoJsonSource(minX, minY, maxX, maxY, projection, callback) {
+  var source = function GeoJsonSource(minX, minY, maxX, maxY, mapProjection, callback) {
     if (!data && !loadError) {
       source.load(callback);
     }
@@ -36,12 +38,15 @@ module.exports = function(path, encoding) {
         console.log("Loaded in " + (Date.now() - start) + "ms");
         
         if (!error) {
-          console.log("Projecting features...");
-          start = Date.now();
-          
-          projector.project.FeatureCollection(data);
-          
-          console.log("Projected in " + (Date.now() - start) + "ms");
+          if (projection !== mapProjection) {
+            console.log("Projecting features...");
+            start = Date.now();
+
+            projector.project.FeatureCollection(data, projection, mapProjection);
+
+            console.log("Projected in " + (Date.now() - start) + "ms"); 
+          }
+          console.log("Projection not necessary")
         }
         
         loading = false;
