@@ -1,79 +1,90 @@
 var fs = require("fs");
 var projector = require("../projector");
 
-module.exports = function(path, projection, encoding) {
-  encoding = encoding || "utf8";
-  projection = projection || "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
 
- 
+var GeoJsonSource = function(options) {
+  this._projection = options.projection || "4326"; //"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
+  this._path = options.path; // required
+  this._encoding = options.encoding || "utf8";
+
   // loading synchronization
-  var loadCallbacks = [];
-  var loading = false;
-  
+  this._loadCallbacks = [];
+  this._loading = false;
+
   // stored state
-  var loadError = null;
-  var data = null;
-  
-  // TODO: project data properly
-  var source = function GeoJsonSource(minX, minY, maxX, maxY, mapProjection, callback) {
-    if (!data && !loadError) {
-      source.load(callback);
+  this._loadError = null;
+  this._data = null;
+  this._projectedData = {};
+
+};
+
+GeoJsonSource.prototype = {
+  constructor: GeoJsonSource,
+
+  getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
+    if (this._projectedData[mapProjection]){
+      callback(null, this._projectedData[mapProjection]);
+    } else {
+      this.load(function(err, data){
+        this._project(mapProjection);
+        callback(this._loadError, this._projectedData[mapProjection])
+      }.bind(this));
     }
-    else {
-      callback(loadError, data);
-    }
-  };
-  source.load = function(callback) {
-    callback && loadCallbacks.push(callback);
-    if (!loading) {
-      loading = true;
-      
+  },
+
+  load: function(callback) {
+    callback && this._loadCallbacks.push(callback);
+
+    if (!this._loading && !this._loadError && !this._data) { // only load once
+      this._loading = true;
+
       var start = Date.now();
-      console.log("Loading data in " + path + "...");
-      
-      loadJsonFile(path, encoding, function(error, jsonData) {
-        loadError = error;
-        data = jsonData;
-        
-        console.log("Loaded in " + (Date.now() - start) + "ms");
-        
+      console.log("Loading data in " + this._path + "...");
+
+      fs.readFile(this._path, this._encoding, function(error, content) {
         if (!error) {
-          if (projection !== mapProjection) {
-            console.log("Projecting features...");
-            start = Date.now();
-
-            projector.project.FeatureCollection(data, projection, mapProjection);
-
-            console.log("Projected in " + (Date.now() - start) + "ms"); 
+          try {
+            this._data = JSON.parse(content);
+            console.log("Loaded in " + (Date.now() - start) + "ms");
           }
-          console.log("Projection not necessary")
+          catch (ex) {
+            this._loadError = ex;
+          }
         }
-        
-        loading = false;
-        var callbacks = loadCallbacks;
-        loadCallbacks = [];
-        callbacks.forEach(function(callback) {
-          callback(loadError, data);
-        });
-      });
-    }
-  };
-  
-  return source;
-};
 
-var loadJsonFile = function(path, encoding, callback) {
-  fs.readFile(path, encoding, function(error, content) {
-    var data;
-    if (!error) {
-      try {
-        data = JSON.parse(content);
-      }
-      catch (ex) {
-        error = ex;
-      }
+        this._loading = false;
+
+        var callbacks = this._loadCallbacks;
+        callbacks.forEach(function(callback) {
+          callback(this._loadError, this._data);
+        }.bind(this));
+        //callback(this._loadError, this._data);
+      }.bind(this));
+    } else {
+      var callbacks = this._loadCallbacks;
+      callbacks.forEach(function(callback) {
+        callback(this._loadError, this._data);
+      }.bind(this));
     }
-    
-    callback(error, data);
-  });
-};
+  },
+
+  _project: function(mapProjection) {
+    if (this._projection !== mapProjection) {
+      console.log("Projecting features...");
+      start = Date.now();
+
+      this._projectedData[mapProjection] = projector.project.FeatureCollection(this._data, this._projection, mapProjection);
+
+      console.log("Projected in " + (Date.now() - start) + "ms"); 
+    } else {
+      console.log("Projection not necessary")
+        this._projectedData[mapProjection] = this._data;
+    }
+  }
+
+  // _filterByExtent: function(minX, minY, maxX, maxY)
+
+
+}
+
+module.exports = GeoJsonSource;
