@@ -17,9 +17,10 @@ app.use('/static/', Express.static(__dirname + '/static'));
 var map = new Map();
 // map.addData(function() { return layers });
 // map.addData(function(x1, y1, x2, y2, projection, callback) { callback(null, layers); });
-map.addData(new GeoJsonSource(__dirname + '/geodata/sf_shore.json'));
-map.addData(new GeoJsonSource(__dirname + '/geodata/sf_parks.json'));
-map.addData(new GeoJsonSource(__dirname + '/geodata/sf_streets.json'));
+//map.addData(new GeoJsonSource({path: __dirname + '/geodata/planning_neighborhoods.json'}));
+map.addData(new GeoJsonSource({path: __dirname + '/geodata/sf_shore.json'}));
+map.addData(new GeoJsonSource({path: __dirname + '/geodata/sf_parks.json'}));
+map.addData(new GeoJsonSource({path: __dirname + '/geodata/sf_streets.json'}));
 map.addStyle(require('./sf_styles'));
 
 
