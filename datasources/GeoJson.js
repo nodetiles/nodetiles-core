@@ -4,8 +4,12 @@ var projector = require("../projector");
 module.exports = function(path, projection, encoding) {
   encoding = encoding || "utf8";
   projection = projection || "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
-
- 
+  
+  var name = path.slice(path.lastIndexOf("/") + 1);
+  if (name.indexOf(".") !== -1) {
+    name = name.slice(0, name.indexOf("."));
+  }
+  
   // loading synchronization
   var loadCallbacks = [];
   var loading = false;
@@ -23,6 +27,7 @@ module.exports = function(path, projection, encoding) {
       callback(loadError, data);
     }
   };
+  source.sourceName = name;
   source.load = function(callback) {
     callback && loadCallbacks.push(callback);
     if (!loading) {
@@ -38,15 +43,15 @@ module.exports = function(path, projection, encoding) {
         console.log("Loaded in " + (Date.now() - start) + "ms");
         
         if (!error) {
-          if (projection !== mapProjection) {
+          // if (projection !== mapProjection) {
             console.log("Projecting features...");
             start = Date.now();
 
-            projector.project.FeatureCollection(data, projection, mapProjection);
+            projector.project.FeatureCollection(data, projection);//, mapProjection);
 
             console.log("Projected in " + (Date.now() - start) + "ms"); 
-          }
-          console.log("Projection not necessary")
+          // }
+          // console.log("Projection not necessary")
         }
         
         loading = false;
