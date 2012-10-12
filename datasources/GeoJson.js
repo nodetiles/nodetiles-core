@@ -1,11 +1,15 @@
 var fs = require("fs");
 var projector = require("../projector");
 
-
 var GeoJsonSource = function(options) {
   this._projection = options.projection;// || "EPSG:4326"; //"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
   this._path = options.path; // required
   this._encoding = options.encoding || "utf8";
+  this.name = options.name || options.path.slice(options.path.lastIndexOf("/") + 1);
+  if (this.name.indexOf(".") !== -1) {
+    this.name = this.name.slice(0, this.name.indexOf("."));
+  }
+  this.sourceName = this.name;
 
   // loading synchronization
   this._loadCallbacks = [];
