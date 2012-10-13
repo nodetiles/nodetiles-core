@@ -29,7 +29,7 @@ GeoJsonSource.prototype = {
     if (this._projectedData[mapProjection]){
       callback(null, this._projectedData[mapProjection]);
     } else {
-      this.load(function(error, data){
+      this.load(function(error, data) {
         if (!error){
             this._project(mapProjection);
         } else {
@@ -50,7 +50,10 @@ GeoJsonSource.prototype = {
       console.log("Loading data in " + this._path + "...");
 
       fs.readFile(this._path, this._encoding, function(error, content) {
-        if (!error) {
+        if (error) {
+          this._loadError = error;
+        }
+        else {
           try {
             this._data = JSON.parse(content);
             console.log("Loaded in " + (Date.now() - start) + "ms");
@@ -63,13 +66,14 @@ GeoJsonSource.prototype = {
         this._loading = false;
 
         var callbacks = this._loadCallbacks;
+        this._loadCallbacks = [];
         callbacks.forEach(function(callback) {
           callback(this._loadError, this._data);
         }.bind(this));
-        //callback(this._loadError, this._data);
       }.bind(this));
     } else {
       var callbacks = this._loadCallbacks;
+      this._loadCallbacks = [];
       callbacks.forEach(function(callback) {
         callback(this._loadError, this._data);
       }.bind(this));
@@ -89,10 +93,6 @@ GeoJsonSource.prototype = {
         this._projectedData[mapProjection] = this._data;
     }
   }
-
-  // _filterByExtent: function(minX, minY, maxX, maxY)
-
-
 }
 
 module.exports = GeoJsonSource;
