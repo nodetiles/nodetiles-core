@@ -16,11 +16,16 @@
       "email": "alexy@codeforamerica.org"
     }
   ],
+  "license": "BSD",
+  "main": "./lib/Map",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codeforamerica/nodetiles.git"
+  },
   "engines": {
     "node": ">0.6.x",
     "npm":  "1.1.x"
   },
-  "main": "./lib/Map",
   "dependencies": {
     "express": "3.x",
     "async": "~0.1.x",
