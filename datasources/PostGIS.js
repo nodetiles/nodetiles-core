@@ -15,13 +15,13 @@ var PostGISSource = function(options) {
   this._attrFields = __.isArray(options.fields) ? 
                        options.fields.join(',') : 
                        options.fields; // array of attribute fields, or comma separated suggested for better performanace
-  this.sourceName = this.name;
+  this.sourceName = options.name || options.tableName;
   
   // TODO: allow `pg` options to be easily set (e.g. max connections, etc.)
   // TODO: throw errors if required fields are missing
 
-  console.log("BUILT: " + this.sourceName);
-  
+
+  console.log("Creating PostGIS source: "+this._connectionString+" "+this._tableName);
   return this;
 }
 
@@ -48,8 +48,8 @@ PostGISSource.prototype = {
     maxX = -122.3812;
     maxY = 37.8036;
     
-    pg.connect(db, function(err, client) {
-      if (err) { return callback(err, null); }
+    pg.connect(this._connectionString, __.bind(function(client, err) { // Switched method signature... WTF?!
+      if (err) { console.error(err); return callback(err, null); }
       console.log("Loading features...");
       var start, query;
         
@@ -58,12 +58,10 @@ PostGISSource.prototype = {
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry, "+this._attrFields+" FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
       else {
-         start = Date.now();
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
-      
       console.log("Querying... "+query+" "+minX+", "+minY+", "+maxX+", "+maxY);
-      client.query(query, [minX, minY, maxX, maxY], __bind(function(err, result) {
+      client.query(query, [minX, minY, maxX, maxY], __.bind(function(err, result) {
         if (err) { return callback(err, null); }
         console.log("Loaded in " + (Date.now() - start) + "ms");
         
@@ -74,7 +72,7 @@ PostGISSource.prototype = {
           // Also, since we're processing blackbox data, we should probably catch any exceptions from processing it
           try {
             geoJson = this._toGeoJson(result.rows);
-            geoJson = projector.project.FeatureCollection(this._projection, mapProjection, this.geoJson);
+            geoJson = projector.project.FeatureCollection(this._projection, mapProjection, geoJson);
           }
           catch(err) {
             return callback(err, null);
@@ -82,7 +80,7 @@ PostGISSource.prototype = {
         }
         callback(err, geoJson);
       }, this));
-    });
+    }, this));
   },
 
   _toGeoJson: function(rows){
@@ -94,7 +92,7 @@ PostGISSource.prototype = {
     };
     
     for (i = 0; i < rows.length; i++) {
-      var item, feature, geometry, key;
+      var item, feature, geometry;
       item = rows[i];
       
       geometry = JSON.parse(item.geometry);
