@@ -48,7 +48,7 @@ PostGISSource.prototype = {
     maxX = -122.3812;
     maxY = 37.8036;
     
-    pg.connect(this._connectionString, __.bind(function(client, err) { // Switched method signature... WTF?!
+    pg.connect(this._connectionString, function(err, client) { // Switched method signature... WTF?!
       if (err) { console.error(err); return callback(err, null); }
       console.log("Loading features...");
       var start, query;
@@ -61,7 +61,7 @@ PostGISSource.prototype = {
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
       console.log("Querying... "+query+" "+minX+", "+minY+", "+maxX+", "+maxY);
-      client.query(query, [minX, minY, maxX, maxY], __.bind(function(err, result) {
+      client.query(query, [minX, minY, maxX, maxY], function(err, result) {
         if (err) { return callback(err, null); }
         console.log("Loaded in " + (Date.now() - start) + "ms");
         
@@ -79,8 +79,8 @@ PostGISSource.prototype = {
           }
         }
         callback(err, geoJson);
-      }, this));
-    }, this));
+      }.bind(this));
+    }.bind(this));
   },
 
   _toGeoJson: function(rows){
