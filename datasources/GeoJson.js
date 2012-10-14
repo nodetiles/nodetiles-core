@@ -30,10 +30,10 @@ GeoJsonSource.prototype = {
       callback(null, this._projectedData[mapProjection]);
     } else {
       this.load(function(error, data) {
-        if (!error){
-            this._project(mapProjection);
-        } else {
+        if (error){
           this._loadError = error;
+        } else {
+          this._project(mapProjection);
         }
         callback(this._loadError, this._projectedData[mapProjection])
       }.bind(this));
@@ -71,7 +71,8 @@ GeoJsonSource.prototype = {
           callback(this._loadError, this._data);
         }.bind(this));
       }.bind(this));
-    } else {
+    }
+    else if (!this._loading) {
       var callbacks = this._loadCallbacks;
       this._loadCallbacks = [];
       callbacks.forEach(function(callback) {
