@@ -4,7 +4,40 @@ var Proj4 = require('proj4js');
 Proj4.defs["EPSG:3857"] = "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
 Proj4.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
+var originShift = 2 * Math.PI * 6378137 / 2.0; //20037508.342789244
+
+// Credit for the math: http://www.maptiler.org/google-maps-coordinates-tile-bounds-projection/
+var util = {
+  pixelsToMeters: function(x, y, zoom, tileSize) {
+    var mx, my;
+    var tileSize = tileSize || 256;
+    // meters per pixel at zoom 0
+    var initialResolution = 2 * Math.PI * 6378137 / tileSize;
+    //Resolution (meters/pixel) for given zoom level (measured at Equator)"
+    var res = initialResolution / Math.pow(2,zoom);
+    // return (2 * math.pi * 6378137) / (self.tileSize * 2**zoom)
+    mx = x * res - originShift;
+    my = y * res - originShift;
+    return [mx, my];
+  },
+  metersToLatLon: function(x, y) {
+    //Converts XY point from Spherical Mercator EPSG:900913 to lat/lon in WGS84 Datum"
+    var lon, lat;
+    lon = (x / originShift) * 180.0;
+    lat = (y / originShift) * 180.0;
+    lat = 180 / Math.pi * (2 * Math.atan( Math.exp( lat * Math.pi / 180.0)) - Math.pi / 2.0);
+    return [lon, lat];
+  },
+  tileToMeters: function(x, y, zoom, tileSize){
+    var tileSize = tileSize || 256;
+    y = (Math.pow(2,zoom) - 1) - y; // TMS to Google tile scheme
+    var min = util.pixelsToMeters(x*tileSize, y*tileSize, zoom);
+    var max = util.pixelsToMeters((x+1)*tileSize, (y+1)*tileSize, zoom);
+    return [min[0], min[1], max[0], max[1]];
+  }
+}
 var project = {
+
   'FeatureCollection': function(inProjection, outProjection, fc) { 
     fc.features.forEach(project.Feature.bind(null, inProjection, outProjection));
     return fc;
@@ -35,12 +68,14 @@ var project = {
   },    
   'Point': function(inProjection, outProjection, c) {
     if (inProjection && outProjection) {
+      var from = new Proj4.Proj(inProjection);
+      var to = new Proj4.Proj(outProjection);
       // TODO: only do this if typeof inProj or outProj is string. Or do it once earlier in the process.
       // var inProj = new Proj4.Proj(inProjection);
       // var outProj = new Proj4.Proj(outProjection);
       var point = new Proj4.Point(c);
       //console.log("original coordinate: "+c);
-      Proj4.transform(inProj, outProj, point);
+      Proj4.transform(from, to, point);
       c[0] = point.x;
       c[1] = point.y;
     } else {
@@ -51,15 +86,18 @@ var project = {
   }
 };
 
-module.exports.project = {};
-Object.keys(project).forEach(function(featureType) {
+module.exports.util = util;
+module.exports.project = project;// {};
+// this is sexy but doesn't work
+/*Object.keys(project).forEach(function(featureType) {
   exports.project[featureType] = function(inProjection, outProjection, feature) {
     var from = inProjection && new Proj4.Proj(inProjection),
-        to = outProjection && new Proj4.Proj(outProjection);
-    
-    return project[featureType](null, null, feature);
+  to = outProjection && new Proj4.Proj(outProjection);
+
+return project[featureType](null, null, feature);
   };
 });
+*/
 
 
 // module.exports.project = project;
