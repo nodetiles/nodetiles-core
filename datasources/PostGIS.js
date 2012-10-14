@@ -7,12 +7,13 @@ var projector = require("../projector");
 
 var PostGISSource = function(options) {
   this._projection = options.projection;
+  this._projectionRaw = options.projection && options.projection.indexOf('EPSG')? options.projection.slice(options.projection.indexOf(':')+1):null;
   this._connectionString = options.connectionString; //required
   this._tableName = options.tableName; // requried
   this._geomField = options.geomField; // required
   this._attrFields = typeof options.fields === "object" ? options.fields.join(',') : options.fields; // array of attribute fields, or comma separated suggested for better performanace
 
-  this.name = options.tableName;
+  this.name = options.name || options.tableName;
   this.sourceName = this.name; //not sure which we're using 
 
   this._loadCallbacks = [];
