@@ -31,13 +31,16 @@ GeoJsonSource.prototype = {
     if (this._projectedData[mapProjection]){
       var data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
       callback(null, data);
-    } else {
+    }
+    else {
       this.load(function(error, data) {
         if (error){
           this._loadError = error;
-        } else {
+        }
+        else if (!this._projectedData[mapProjection]) {
           this._project(mapProjection);
         }
+        
         var data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
         callback(this._loadError, data);
       }.bind(this));
@@ -45,9 +48,14 @@ GeoJsonSource.prototype = {
   },
 
   load: function(callback) {
+    if (this._data || this._loadError) {
+      callback(this._loadError, this._data);
+      return;
+    }
+    
     callback && this._loadCallbacks.push(callback);
-
-    if (!this._loading && !this._loadError && !this._data) { // only load once
+    
+    if (!this._loading) {
       this._loading = true;
 
       var start = Date.now();
@@ -64,6 +72,7 @@ GeoJsonSource.prototype = {
           }
           catch (ex) {
             this._loadError = ex;
+            console.log("Failed to load in " + (Date.now() - start) + "ms");
           }
         }
 
@@ -74,13 +83,6 @@ GeoJsonSource.prototype = {
         callbacks.forEach(function(callback) {
           callback(this._loadError, this._data);
         }.bind(this));
-      }.bind(this));
-    }
-    else if (!this._loading) {
-      var callbacks = this._loadCallbacks;
-      this._loadCallbacks = [];
-      callbacks.forEach(function(callback) {
-        callback(this._loadError, this._data);
       }.bind(this));
     }
   },
