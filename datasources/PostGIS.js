@@ -1,4 +1,4 @@
-var pg        = require("pg"),
+var pg        = require("pg").native,
     projector = require("../projector"),
     __        = require("lodash");
 /*
