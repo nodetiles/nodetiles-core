@@ -80,7 +80,7 @@ PostGISSource.prototype = {
             return callback(err, null);
           }
         }
-        callback(error, geoJson);
+        callback(err, geoJson);
       }, this));
     });
   },
