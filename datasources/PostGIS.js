@@ -37,16 +37,33 @@ PostGISSource.prototype = {
   //    var query = SELECT ST_TRANSFORM(query, projection, mapProjecion)
 
   getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
+    console.log("GETSHAPES", this._projection, mapProjection);
     // we don't get real coordinates from Map.js yet so we'll fake it for now
     // minX = -122.4565;
     // minY = 37.756;
     // maxX = -122.451;
     // maxY = 37.761;
-
+    /*
     minX = -122.5195;
     minY = 37.7062;
     maxX = -122.3812;
     maxY = 37.8036;
+    */
+    
+    var min = [minX, minY];
+    var max = [maxX, maxY];
+
+    // project request coordinates into data coordinates
+    if (mapProjection !== this._projection) {
+      min = projector.project.Point(mapProjection, this._projection, min);
+      max = projector.project.Point(mapProjection, this._projection, max);
+      console.log(min,max);
+    }
+    
+
+    //min = [-122.5195, 37.7062];
+    //max = [-122.3812, 37.8036];
+
     
     pg.connect(this._connectionString, function(err, client) { // Switched method signature... WTF?!
       if (err) { console.error(err); return callback(err, null); }
@@ -60,19 +77,24 @@ PostGISSource.prototype = {
       else {
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
-      console.log("Querying... "+query+" "+minX+", "+minY+", "+maxX+", "+maxY);
-      client.query(query, [minX, minY, maxX, maxY], function(err, result) {
+      console.log("Querying... "+query+" "+min+", "+max);
+      client.query(query, [min[0], min[1], max[0], max[1]], function(err, result) {
         if (err) { return callback(err, null); }
         console.log("Loaded in " + (Date.now() - start) + "ms");
         
         var geoJson;
 
-        if (result) {
+        if (result && result.rows) {
           // Removed this._lastResult because it wasn't clear why it's being stored
           // Also, since we're processing blackbox data, we should probably catch any exceptions from processing it
           try {
             geoJson = this._toGeoJson(result.rows);
-            geoJson = projector.project.FeatureCollection(this._projection, mapProjection, geoJson);
+            if (this._projection !== mapProjection){
+              console.log("REPROJECTING GEOMETRY");
+              //console.log('before',geoJson.features[0].geometry.coordinates[0][0][0]);
+              geoJson = projector.project.FeatureCollection(this._projection, mapProjection, geoJson);
+              //console.log('after',geoJson.features[0].geometry.coordinates[0][0][0]);
+            }
           }
           catch(err) {
             return callback(err, null);
