@@ -7,7 +7,7 @@ var projector = require("../projector");
 
 var PostGISSource = function(options) {
   this._projection = options.projection;
-  this._projectionRaw = options.projection && options.projection.indexOf('EPSG')? options.projection.slice(options.projection.indexOf(':')+1):null;
+  this._projectionRaw = options.projection && options.projection.indexOf('EPSG')? options.projection.slice(options.projection.indexOf(':')+1):null; // for PostGIS < v1.5, if we want to support it
   this._connectionString = options.connectionString; //required
   this._tableName = options.tableName; // requried
   this._geomField = options.geomField; // required
@@ -16,7 +16,6 @@ var PostGISSource = function(options) {
   this.name = options.name || options.tableName;
   this.sourceName = this.name; //not sure which we're using 
 
-  this._loadCallbacks = [];
   this._loading = false;
   this._lastResult = null;
 
@@ -24,6 +23,8 @@ var PostGISSource = function(options) {
   this._client = null;
   this._connectError = null;
   this._connect();
+
+  console.log("BUILT: "+this.sourceName);
 }
 
 PostGISSource.prototype = {
@@ -67,13 +68,11 @@ PostGISSource.prototype = {
     maxX = -122.3812;
     maxY = 37.8036;
     
-    callback && this._loadCallbacks.push(callback);
-    
     if (!this._connectError && !this._client) {
       this._connect();
     }
 
-    if (!this._loading && !this._connectError && this._client) {
+    if (!this._connectError && this._client) {
       this._loading = true;
       console.log("Loading features...");
       start = Date.now();
@@ -81,7 +80,6 @@ PostGISSource.prototype = {
       if (this._attrFields) {
         var query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry, "+this._attrFields+" FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       } else {
-        // TODO: use dynamic sql here to not select geometry twice
         // TODO: build this query once
         var query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
@@ -96,17 +94,11 @@ PostGISSource.prototype = {
           this._lastResult = projector.project.FeatureCollection(this._projection, mapProjection, this._lastResult);
         }
 
-        var callbacks = this._loadCallbacks;
-        callbacks.forEach(function(callback) {
-          callback(error, this._lastResult);
-        }.bind(this));
+        callback(error, this._lastResult);
       }.bind(this));
 
     } else {
-      var callbacks = this._loadCallbacks;
-      callbacks.forEach(function(callback) {
-        callback(this._connectError);
-      }.bind(this));
+      callback(this._connectError);
     }
   },
 
