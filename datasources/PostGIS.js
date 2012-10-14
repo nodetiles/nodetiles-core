@@ -1,5 +1,6 @@
-var pg = require("pg");
-var projector = require("../projector");
+var pg        = require("pg"),
+    projector = require("../projector"),
+    __        = require("lodash");
 /*
  * Something like this eventually? 
  * https://github.com/mapbox/tilemill/blob/master/models/Layer.bones#L60
@@ -8,45 +9,24 @@ var projector = require("../projector");
 var PostGISSource = function(options) {
   this._projection = options.projection;
   this._projectionRaw = options.projection && options.projection.indexOf('EPSG')? options.projection.slice(options.projection.indexOf(':')+1):null; // for PostGIS < v1.5, if we want to support it
-  this._connectionString = options.connectionString; //required
-  this._tableName = options.tableName; // requried
-  this._geomField = options.geomField; // required
-  this._attrFields = typeof options.fields === "object" ? options.fields.join(',') : options.fields; // array of attribute fields, or comma separated suggested for better performanace
+  this._connectionString = options.connectionString; // required
+  this._tableName = options.tableName;               // required
+  this._geomField = options.geomField;               // required
+  this._attrFields = __.isArray(options.fields) ? 
+                       options.fields.join(',') : 
+                       options.fields; // array of attribute fields, or comma separated suggested for better performanace
+  this.sourceName = this.name;
+  
+  // TODO: allow `pg` options to be easily set (e.g. max connections, etc.)
+  // TODO: throw errors if required fields are missing
 
-  this.name = options.name || options.tableName;
-  this.sourceName = this.name; //not sure which we're using 
-
-  this._loading = false;
-  this._lastResult = null;
-
-  //state
-  this._client = null;
-  this._connectError = null;
-  this._connect();
-
-  console.log("BUILT: "+this.sourceName);
+  console.log("BUILT: " + this.sourceName);
+  
+  return this;
 }
 
 PostGISSource.prototype = {
   constructor: PostGISSource,
-
-  _connect: function() {
-    console.log("Connecting to postGIS "+this._connectionString);
-    if (this._connectionString){
-      pg.connect(this._connectionString, function(error, client){
-        if (!error) {
-          console.log("Connected");
-          this._client = client;
-        } else {
-          console.warn("Error connecting", error);
-          this._connectError = error;
-        }
-      }.bind(this));
-    } else {
-      console.warn("No connection string provided");
-      this._connectError = "No connection string provided";
-    }
-  },
 
   // need some way to check projection equivalency programmatically so we can use built-in postgis projection i.e.
   //
@@ -68,55 +48,66 @@ PostGISSource.prototype = {
     maxX = -122.3812;
     maxY = 37.8036;
     
-    if (!this._connectError && !this._client) {
-      this._connect();
-    }
-
-    if (!this._connectError && this._client) {
-      this._loading = true;
+    pg.connect(db, function(err, client) {
+      if (err) { return callback(err, null); }
       console.log("Loading features...");
+      var start, query;
+        
       start = Date.now();
-
       if (this._attrFields) {
-        var query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry, "+this._attrFields+" FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
-      } else {
-        // TODO: build this query once
-        var query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
+        query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry, "+this._attrFields+" FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
-
+      else {
+         start = Date.now();
+        query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
+      }
+      
       console.log("Querying... "+query+" "+minX+", "+minY+", "+maxX+", "+maxY);
-      this._client.query(query, [minX, minY, maxX, maxY], function(error, result) {
-        this._loading = false;
+      client.query(query, [minX, minY, maxX, maxY], __bind(function(err, result) {
+        if (err) { return callback(err, null); }
         console.log("Loaded in " + (Date.now() - start) + "ms");
+        
+        var geoJson;
 
         if (result) {
-          this._lastResult = this._toGeoJson(result.rows);
-          this._lastResult = projector.project.FeatureCollection(this._projection, mapProjection, this._lastResult);
+          // Removed this._lastResult because it wasn't clear why it's being stored
+          // Also, since we're processing blackbox data, we should probably catch any exceptions from processing it
+          try {
+            geoJson = this._toGeoJson(result.rows);
+            geoJson = projector.project.FeatureCollection(this._projection, mapProjection, this.geoJson);
+          }
+          catch(err) {
+            return callback(err, null);
+          }
         }
-
-        callback(error, this._lastResult);
-      }.bind(this));
-
-    } else {
-      callback(this._connectError);
-    }
+        callback(error, geoJson);
+      }, this));
+    });
   },
 
   _toGeoJson: function(rows){
-    var obj={};
-    obj.type = "FeatureCollection";
-    obj.features = [];
-    rows.forEach(function(item){
-      var feature = {};
-      feature.type = "Feature";
-      feature.properties = {};
-      feature.geometry = JSON.parse(item.geometry);
+    var obj, i;
+    
+    obj = {
+      type: "FeatureCollection",
+      features: []
+    };
+    
+    for (i = 0; i < rows.length; i++) {
+      var item, feature, geometry, key;
+      item = rows[i];
+      
+      geometry = JSON.parse(item.geometry);
       delete item.geometry;
-      for (var key in item) {
-        feature.properties[key] = item[key];
+      
+      feature = {
+        type: "Feature",
+        properties: item,
+        geometry: geometry
       }
+      
       obj.features.push(feature);
-    });
+    } 
     return obj;
   }
 }
