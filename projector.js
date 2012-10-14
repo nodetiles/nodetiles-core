@@ -36,8 +36,8 @@ var project = {
   'Point': function(inProjection, outProjection, c) {
     if (inProjection && outProjection) {
       // TODO: only do this if typeof inProj or outProj is string. Or do it once earlier in the process.
-      var inProj = new Proj4.Proj(inProjection);
-      var outProj = new Proj4.Proj(outProjection);
+      // var inProj = new Proj4.Proj(inProjection);
+      // var outProj = new Proj4.Proj(outProjection);
       var point = new Proj4.Point(c);
       //console.log("original coordinate: "+c);
       Proj4.transform(inProj, outProj, point);
@@ -51,4 +51,15 @@ var project = {
   }
 };
 
-module.exports.project = project;
+module.exports.project = {};
+Object.keys(project).forEach(function(featureType) {
+  exports.project[featureType] = function(inProjection, outProjection, feature) {
+    var from = inProjection && new Proj4.Proj(inProjection),
+        to = outProjection && new Proj4.Proj(outProjection);
+    
+    return project[featureType](null, null, feature);
+  };
+});
+
+
+// module.exports.project = project;

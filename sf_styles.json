@@ -1,18 +1,28 @@
 [
   {
     "selector": {
+      "background": true
+    },
+    "properties": {
+      "background-color": "#ddddff"
+    }
+  },
+  
+  {
+    "selector": {
       "source": "sf_shore"
     },
     "properties": {
       "fillStyle": "#ffffee",
-      "strokeStyle": "#888",
+      "strokeStyle": "#888888",
       "lineWidth": 1.0
     }
   },
   
   {
     "selector": {
-      "source": "sf_parks"
+      "source": "sf_parks",
+      "interactive": true
     },
     "properties": {
       "fillStyle": "rgba(0,255,0,.5)",
@@ -23,7 +33,8 @@
   
   {
     "selector": {
-      "source": "sf_streets"
+      "source": "sf_streets",
+      "interactive": true
     },
     "properties": {
       "strokeStyle": "rgba(0,0,0,.8)",
