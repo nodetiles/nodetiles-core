@@ -43,12 +43,6 @@ PostGISSource.prototype = {
     // minY = 37.756;
     // maxX = -122.451;
     // maxY = 37.761;
-    /*
-    minX = -122.5195;
-    minY = 37.7062;
-    maxX = -122.3812;
-    maxY = 37.8036;
-    */
     
     var min = [minX, minY];
     var max = [maxX, maxY];
@@ -90,7 +84,7 @@ PostGISSource.prototype = {
           try {
             geoJson = this._toGeoJson(result.rows);
             if (this._projection !== mapProjection){
-              console.log("REPROJECTING GEOMETRY");
+              //console.log("REPROJECTING GEOMETRY");
               //console.log('before',geoJson.features[0].geometry.coordinates[0][0][0]);
               geoJson = projector.project.FeatureCollection(this._projection, mapProjection, geoJson);
               //console.log('after',geoJson.features[0].geometry.coordinates[0][0][0]);
