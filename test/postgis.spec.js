@@ -1,6 +1,6 @@
 var expect = require('chai').expect;
 var sinon = require('sinon');
-var pg    = require('pg');
+var pg    = require('pg').native;
 var PostGISSource = require(__dirname + '/../datasources/PostGIS');
 
 var async = require('async');
@@ -21,11 +21,13 @@ describe('PostGIS Data Source', function() {
     
     // stub the PostGres connection and client so it never fires
     var result = [ {key: "value"}, {key: "value2"} ];
-    var clientSpy = sinon.stub().yields(null, result);
-    var pgStub = sinon.stub(pg, 'connect').yields(null, clientSpy);
+    querySpy = sinon.stub().yields(null, result)
+    var pgStub = sinon.stub(pg, 'connect').yields(null, { query: querySpy });
     
     it('should data values', function(done){
-      source.getShapes(0,0,0,0,4326, function(err, features) {
+      source.getShapes(-122.5195,37.7062,-122.3812,37.8036,"EPSG:4326", function(err, features) {
+        // These are the query arguments/boundaries
+        //console.log(querySpy.args[0][1]);
         done();
       });
     });
