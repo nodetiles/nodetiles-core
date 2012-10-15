@@ -1,5 +1,5 @@
 var pg        = require("pg").native,
-    projector = require("../projector"),
+    projector = require(__dirname + "/../lib/projector"),
     __        = require("lodash");
 /*
  * Something like this eventually? 

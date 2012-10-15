@@ -24,7 +24,7 @@ describe('PostGIS Data Source', function() {
     querySpy = sinon.stub().yields(null, result)
     var pgStub = sinon.stub(pg, 'connect').yields(null, { query: querySpy });
     
-    it('should data values', function(done){
+    it('TODO', function(done){
       source.getShapes(-122.5195,37.7062,-122.3812,37.8036,"EPSG:4326", function(err, features) {
         // These are the query arguments/boundaries
         //console.log(querySpy.args[0][1]);
