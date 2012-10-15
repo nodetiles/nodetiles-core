@@ -1,5 +1,5 @@
 var fs = require("fs");
-var projector = require("../projector");
+var projector = require(__dirname + "/../lib/projector");
 
 var FILTER_BY_EXTENTS = false;
 

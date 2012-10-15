@@ -17,7 +17,7 @@
     }
   ],
   "license": "BSD",
-  "main": "./lib/Map",
+  "main": "./index",
   "repository": {
     "type": "git",
     "url": "https://github.com/codeforamerica/nodetiles.git"
@@ -27,12 +27,11 @@
     "npm":  "1.1.x"
   },
   "dependencies": {
-    "express": "3.x",
     "async": "~0.1.x",
     "lodash": "~0.6.1",
     "canvas": "0.12.x",
-    "pg":"~0.8.4",
-    "proj4js":"~0.3.0"
+    "proj4js":"~0.3.0",
+    "pg":"~0.8.4"
   },
   "devDependencies": {
     "canvas": "0.13.x",

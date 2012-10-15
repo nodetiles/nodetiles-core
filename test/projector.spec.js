@@ -1,6 +1,6 @@
 var expect = require('chai').expect;
 var sinon = require('sinon');
-var projector = require(__dirname + '/../projector');
+var projector = require('./../lib/projector');
 
 // THIS IS THE CORRECT DATA
 // Requested tile: 12/654/1584
