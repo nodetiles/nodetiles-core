@@ -20,7 +20,7 @@ describe('Projector tools', function() {
       -13638811.83098057, 4529964.044292685,
       -13629027.891360067, 4539747.983913187
     ]
-    var outputMeters = projector.util.tileToMeters(tile[1], tile[1], tile[0]);
+    var outputMeters = projector.util.tileToMeters(tile[1], tile[2], tile[0]);
     
     expect(outputMeters[0]).to.equal(metersCorrect[0], 'should calculate minX');
     expect(outputMeters[1]).to.equal(metersCorrect[1], 'should calculate minY');
