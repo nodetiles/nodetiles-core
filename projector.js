@@ -1,8 +1,6 @@
 // TODO this should support passing in projection strings in many formats, including preconstructed Proj4 objects 
 
 var Proj4 = require('proj4js');
-Proj4.defs["EPSG:3857"] = "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +units=m +no_defs";
-Proj4.defs["EPSG:4326"] = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
 
 var originShift = 2 * Math.PI * 6378137 / 2.0; //20037508.342789244
 
@@ -65,7 +63,7 @@ var project = {
   'MultiPoint': function(inProjection, outProjection, mp) { 
     mp.forEach(project.Point.bind(null, inProjection, outProjection)); 
     return mp;
-  },    
+  },
   'Point': function(inProjection, outProjection, c) {
     if (inProjection && outProjection) {
       var from = new Proj4.Proj(inProjection);
