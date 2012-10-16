@@ -29,13 +29,12 @@
   "dependencies": {
     "async": "~0.1.x",
     "lodash": "~0.6.1",
-    "canvas": "0.12.x",
+    "canvas": "https://github.com/jhurliman/node-canvas/tarball/patch-1/7897bff",
     "proj4js":"~0.3.0",
     "pg":"~0.8.4",
     "carto":"~0.9.3"
   },
   "devDependencies": {
-    "canvas": "0.13.x",
     "mocha":  "~1.4.1",
     "chai": "~1.2.0",
     "sinon": "~1.4.2"
