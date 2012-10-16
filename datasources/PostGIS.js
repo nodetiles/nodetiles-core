@@ -19,9 +19,7 @@ var PostGISSource = function(options) {
   
   // TODO: allow `pg` options to be easily set (e.g. max connections, etc.)
   // TODO: throw errors if required fields are missing
-
-
-  console.log("Creating PostGIS source: "+this._connectionString+" "+this._tableName);
+  // console.log("Creating PostGIS source: "+this._connectionString+" "+this._tableName);
   return this;
 }
 
@@ -37,7 +35,7 @@ PostGISSource.prototype = {
   //    var query = SELECT ST_TRANSFORM(query, projection, mapProjecion)
 
   getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
-    console.log("GETSHAPES", this._projection, mapProjection);
+    // console.log("GETSHAPES", this._projection, mapProjection);
     // we don't get real coordinates from Map.js yet so we'll fake it for now
     // minX = -122.4565;
     // minY = 37.756;
@@ -51,17 +49,12 @@ PostGISSource.prototype = {
     if (mapProjection !== this._projection) {
       min = projector.project.Point(mapProjection, this._projection, min);
       max = projector.project.Point(mapProjection, this._projection, max);
-      console.log(min,max);
+      // console.log(min,max);
     }
-    
-
-    //min = [-122.5195, 37.7062];
-    //max = [-122.3812, 37.8036];
-
     
     pg.connect(this._connectionString, function(err, client) { // Switched method signature... WTF?!
       if (err) { console.error(err); return callback(err, null); }
-      console.log("Loading features...");
+      // console.log("Loading features...");
       var start, query;
         
       start = Date.now();
@@ -71,16 +64,15 @@ PostGISSource.prototype = {
       else {
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry,* FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4);";
       }
-      console.log("Querying... "+query+" "+min+", "+max);
+      // console.log("Querying... "+query+" "+min+", "+max);
       client.query(query, [min[0], min[1], max[0], max[1]], function(err, result) {
         if (err) { return callback(err, null); }
-        console.log("Loaded in " + (Date.now() - start) + "ms");
+        // console.log("Loaded in " + (Date.now() - start) + "ms");
         
         var geoJson;
 
         if (result && result.rows) {
-          // Removed this._lastResult because it wasn't clear why it's being stored
-          // Also, since we're processing blackbox data, we should probably catch any exceptions from processing it
+          // TODO: since we're processing blackbox data, we should probably catch any exceptions from processing it
           try {
             geoJson = this._toGeoJson(result.rows);
             if (this._projection !== mapProjection){
