@@ -1,5 +1,5 @@
 {
-  "name": "nodetiles",
+  "name": "nodetiles-core",
   "version": "0.0.1",
   "description": "Joyful map rendering with Node.js.",
   "contributors": [ 
