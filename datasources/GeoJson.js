@@ -86,6 +86,10 @@ GeoJsonSource.prototype = {
       }.bind(this));
     }
   },
+  
+  project: function(destinationProjection) {
+    this._project(destinationProjection);
+  },
 
   _project: function(mapProjection) {
     var doBounds = !this._projectedData[mapProjection];
