@@ -44,5 +44,10 @@ Within the `/geodata` directory are GEOjson files from the [datasf.of](https://d
 And some others, including world outlines from [Natural Earth](http://www.naturalearthdata.com/).
 
 
+Projections
+-----------
+[Supported projections](https://github.com/temsa/node-proj4js/tree/master/lib/defs)
+
+
 
 
