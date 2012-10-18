@@ -31,6 +31,7 @@
     "lodash": "~0.6.1",
     "canvas": "https://github.com/jhurliman/node-canvas/tarball/patch-1/7897bff",
     "proj4js":"~0.3.0",
+    "epsg":">=0.0.1",
     "pg":"~0.8.4",
     "carto":"~0.9.3"
   },
