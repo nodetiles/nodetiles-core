@@ -1,7 +1,7 @@
 var fs = require("fs");
 var projector = require(__dirname + "/../lib/projector");
 
-var FILTER_BY_EXTENTS = false;
+var FILTER_BY_EXTENTS = true;
 
 var GeoJsonSource = function(options) {
   this._projection = projector.util.cleanProjString(options.projection) || "EPSG:4326"; //"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs";
