@@ -4,7 +4,7 @@ Nodetiles-core is a javascript library for rendering map tiles suitable for slip
 
 - **Flexible Data-connectors**: We offer GeoJson and PostGIS connectors out-of-the-box, but it's easy to build your own. 
 - **Map Projections**: Transform data between more [3,900+](https://github.com/yuletide/node-proj4js-defs/blob/master/epsg.js) EPSG projections using Proj4.js
-- **Cascadenik Style Sheets**: We support many (if not most) stylesheet features of [Cascadenik](https://github.com/mapnik/Cascadenik/wiki/Cascadenik) making it trivial to import your map styles from tools like Tilemill
+- **CartoCSS Support**: We support many (if not most) stylesheet features of [CartCSS](http://mapbox.com/tilemill/docs/manual/carto/) making it trivial to import your map styles from tools like Tilemill
 - **Slippy-map URL helpers**: Easily serve map tiles, UTFGrids, and Tile.json. Check out [nodetiles-init](https://github.com/codeforamerica/nodetiles-init) for a simple scaffold.
 - **Static maps**: If slipply-maps aren't your style, generate static images of any dimension; checkout [nodetiles-example-static](https://github.com/codeforamerica/nodetiles-example-static) for examples.
 - **Joyfully simple, pluggable, flexible, powerful**: We built Nodetiles to be easily understandable, extensible and a joy to use. It's built with Javascript and tries to provide a solid foundation of tools that are still easy to understand, extend or replace depending on your needs. [File an issue](https://github.com/codeforamerica/nodetiles-core/issues/new) if Nodetiles can't do what you need.
@@ -36,7 +36,7 @@ map.addData(new GeoJsonSource({
   projection: "EPSG:900913"
 }));
 
-/* Link your Cascadenik stylesheet */
+/* Link your Carto stylesheet */
 map.addStyle(fs.readFileSync('./style.mss','utf8'));
 
 /* Render out the map to a file */
