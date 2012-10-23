@@ -1,7 +1,7 @@
 var Shp = require('shp');
 var projector = require(__dirname + "/../lib/projector");
 
-var FILTER_BY_EXTENTS = false;
+var FILTER_BY_EXTENTS = true;
 
 var ShpSource = function(options) {
   this._projection = projector.util.cleanProjString(options.projection || "EPSG:4326");
