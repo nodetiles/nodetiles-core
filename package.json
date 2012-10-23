@@ -33,7 +33,8 @@
     "proj4js":"~0.3.0",
     "proj4js-defs":">=0.0.1",
     "pg":"~0.8.4",
-    "carto":"~0.9.3"
+    "carto":"~0.9.3",
+    "shp":"https://github.com/yuletide/node-shp/tarball/master"
   },
   "devDependencies": {
     "mocha":  "~1.4.1",
