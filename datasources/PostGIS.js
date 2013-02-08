@@ -57,7 +57,7 @@ PostGISSource.prototype = {
       if (err) { console.error(err); return callback(err, null); }
       // console.log("Loading features...");
       var start, query;
-      // console.log(this._projectionRaw);        
+
       start = Date.now();
       if (this._attrFields) {
         query = "SELECT ST_AsGeoJson("+this._geomField+") as geometry, "+this._attrFields+" FROM "+this._tableName+" WHERE "+this._geomField+" && ST_MakeEnvelope($1,$2,$3,$4,"+this._projectionRaw+");";
