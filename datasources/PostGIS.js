@@ -9,7 +9,7 @@ var pg        = require("pg").native,
 var PostGISSource = function(options) {
   this._projection = projector.util.cleanProjString(options.projection);
   // TODO: do this properly, this will break with proj4 strings?
-  this._projectionRaw = options.projection && options.projection.indexOf('EPSG') == 0? options.projection.slice(options.projection.indexOf(':')+1):null; // for PostGIS < v1.5, if we want to support it
+  this._projectionRaw = options.projection && options.projection.indexOf('EPSG') === 0? options.projection.slice(options.projection.indexOf(':')+1):null; // for PostGIS < v1.5, if we want to support it
   this._connectionString = options.connectionString; // required
   this._tableName = options.tableName;               // required
   this._geomField = options.geomField;               // required
