@@ -1,0 +1,8 @@
+# osx noise
+.DS_Store
+profile
+
+node_modules
+
+# pull these data files down separately (they are HUGE and shouldn't be stored in the repo)
+geodata

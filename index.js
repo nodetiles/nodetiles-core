@@ -1,5 +1,6 @@
 var Map = require(__dirname + '/lib/Map'),
     GeoJson = require(__dirname + '/datasources/GeoJson'),
+    RemoteGeoJson = require(__dirname + '/datasources/RemoteGeoJson'),
     PostGIS = require(__dirname + '/datasources/PostGIS'),
     Shp = require(__dirname + '/datasources/Shp'),
     projector = require(__dirname + '/lib/projector'),
@@ -16,6 +17,7 @@ module.exports = {
    */
   datasources: {
     GeoJson: GeoJson,
+    RemoteGeoJson: RemoteGeoJson,
     PostGIS: PostGIS,
     Shp: Shp
   },
