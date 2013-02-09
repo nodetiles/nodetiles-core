@@ -29,7 +29,7 @@
   "dependencies": {
     "async": "~0.1.x",
     "lodash": "~0.6.1",
-    "canvas": "0.13.x",
+    "canvas": "0.12.x",
     "proj4js": "~0.3.0",
     "proj4js-defs": ">=0.0.1",
     "pg": "~0.8.4",
