@@ -73,5 +73,5 @@ Projections
 
 Copyright
 ---------
-Copyright (c) 2012-2013 Rob Brackett, Ben Sheldon, and Alex Yule. See LICENSE for details.
+Copyright (c) 2012-2013 Code for America. See LICENSE for details.
 
