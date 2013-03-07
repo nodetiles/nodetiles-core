@@ -71,6 +71,7 @@ Projections
 -----------
 [Supported projections](https://github.com/yuletide/node-proj4js-defs)
 
-
-
+Copyright
+---------
+Copyright (c) 2012-2013 Rob Brackett, Ben Sheldon, and Alex Yule. See LICENSE for details.
 
