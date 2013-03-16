@@ -20,7 +20,7 @@
   "main": "./index",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeforamerica/nodetiles.git"
+    "url": "https://github.com/localdata/nodetiles.git"
   },
   "engines": {
     "node": ">0.6.x",
@@ -48,6 +48,6 @@
   "dist": {
     "shasum": "79bd25f74719d91cf109a6fe04cba7ef22258807"
   },
-  "_from": "https://github.com/hampelm/nodetiles-core/tarball/remote-geoJson",
-  "_resolved": "https://github.com/hampelm/nodetiles-core/tarball/remote-geoJson"
+  "_from": "https://github.com/localdata/nodetiles-core/tarball/remotegeojson",
+  "_resolved": "https://github.com/localdata/nodetiles-core/tarball/remotegeojson"
 }

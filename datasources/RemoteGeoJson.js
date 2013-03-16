@@ -1,10 +1,19 @@
 var fs = require("fs");
 var request = require("request");
 var projector = require(__dirname + "/../lib/projector");
+//var maptiles = require(__dirname + "/../lib/maptiles");
 
 var FILTER_BY_EXTENTS = true;
 
+var A = 6378137,
+    MAXEXTENT = 20037508.34,
+    ORIGIN_SHIFT = Math.PI * 6378137,
+    D2R = Math.PI / 180,
+    R2D = 180 / Math.PI; //20037508.342789244
+
+
 var RemoteGeoJsonSource = function(options) {
+  // Set basic options: projection, data path, dataset name, and encoding
   this._projection = projector.util.cleanProjString(options.projection || "EPSG:4326");
   this._path = options.path; // required
   this._encoding = options.encoding || "utf8";
@@ -28,116 +37,164 @@ var RemoteGeoJsonSource = function(options) {
 RemoteGeoJsonSource.prototype = {
   constructor: RemoteGeoJsonSource,
 
+  _metersToLatLon: function(c) {
+    return [
+      (c[0] * R2D / A),
+      ((Math.PI*0.5) - 2.0 * Math.atan(Math.exp(-c[1] / A))) * R2D
+    ];
+  },
+
   getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
-    if (this._projectedData[mapProjection]){
-      var data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
-      callback(null, data);
-    }
-    else {
-      this.load(function(error, data) {
-        if (error){
-          this._loadError = error;
+    var data;
+
+    // Hacky! 
+    minXY = this._metersToLatLon([minX, minY]);
+    maxXY = this._metersToLatLon([maxX, maxY]);
+
+    // Disregard this for now:
+    // We request parcel shape data using tile names, even though they are not
+    // rendered tiles. Since we're getting shape data, we can work with whatever
+    // zoom level produces a convenient spatial chunk of data.
+    // var vectorTileZoom = 17;
+    // var tiles = maptiles.getTileCoords(vectorTileZoom, [[, ], [, ]]);
+    // Let's do a query on the data based on our tiles 
+    // Do this later callback(this._loadError, data);
+
+    var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
+    var url = this._path + serializedBounds;
+    console.log("Getting data from", url);
+
+    var start = Date.now();
+
+    request(url, function (error, response, body) {
+      if (error || response.statusCode !== 200) {
+        this._loadError = error;
+      }
+      else {
+        try {
+          this._data = JSON.parse(body);
+          console.log("Loaded " + this._data.features.length + " features in " + (Date.now() - start) + "ms");
+          console.log(url);
         }
-        else if (!this._projectedData[mapProjection]) {
-          this._project(mapProjection);
+        catch (ex) {
+          this._loadError = ex;
+          console.log("Failed to load in " + (Date.now() - start) + "ms");
         }
-        
-        var data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
-        callback(this._loadError, data);
-      }.bind(this));
-    }
+      }
+
+      this._project(mapProjection);
+      callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
+
+      // this._loading = false;
+
+      // var callbacks = this._loadCallbacks;
+      // this._loadCallbacks = [];
+      // callbacks.forEach(function(callback) {
+      //   callback(this._loadError, this._data);
+      // }.bind(this));
+    }.bind(this));
+
+
+    // Old stuff......
+
+    // If there already is data at our desired projection:
+    // if (this._projectedData[mapProjection]){
+    // 
+    //   // Filter the data to match the given bounds
+    //   data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
+    //   callback(null, data);
+    // }
+    // else {
+    // 
+    //   // If we don't already have data, load it
+    //   this.load(function(error, data) {
+    //     if (error){
+    //       this._loadError = error;
+    //     }
+    //     else if (!this._projectedData[mapProjection]) {
+    //       // TODO: why are we projecting?
+    //       // Shouldn't the data already come projected?
+    //       this._project(mapProjection);
+    //     }
+    // 
+    //     // Filter the data by the given extent
+    //     // TODO: instead, we should already have the data indexed by extent.
+    //     // Or we can just request this square from the server.
+    //     data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
+    //     callback(this._loadError, data);
+    //   }.bind(this));
+    // }
   },
 
   load: function(callback) {
-    if (this._data || this._loadError) {
-      callback(this._loadError, this._data);
-      return;
-    }
-    
-    callback && this._loadCallbacks.push(callback);
-    
-    if (!this._loading) {
-      this._loading = true;
+    // Load becomes a noop
+    return;
 
-      var start = Date.now();
-      console.log("Loading data from " + this._path + "...");
+    //if (this._data || this._loadError) {
+    //  callback(this._loadError, this._data);
+    //  return;
+    //}
 
-      var request = require('request');
-      request(this._path, function (error, response, body) {
-        if (error || response.statusCode !== 200) {
-          this._loadError = error;
-        }
-        else {
-          try {
-            this._data = JSON.parse(body);
-            console.log("Loaded in " + (Date.now() - start) + "ms");
-          }
-          catch (ex) {
-            this._loadError = ex;
-            console.log("Failed to load in " + (Date.now() - start) + "ms");
-          }
-        }
+    // callback && this._loadCallbacks.push(callback);
 
-        this._loading = false;
+    //if (!this._loading) {
+    //  this._loading = true;
+    //
+    //  var start = Date.now();
+    //  console.log("Loading data from " + this._path + "...");
 
-        var callbacks = this._loadCallbacks;
-        this._loadCallbacks = [];
-        callbacks.forEach(function(callback) {
-          callback(this._loadError, this._data);
-        }.bind(this));
-      }.bind(this));
+    //  var request = require('request');
+    //  request(this._path, function (error, response, body) {
+    //    if (error || response.statusCode !== 200) {
+    //      this._loadError = error;
+    //    }
+    //    else {
+    //      try {
+    //        this._data = JSON.parse(body);
+    //        console.log("Loaded in " + (Date.now() - start) + "ms");
+    //      }
+    //      catch (ex) {
+    //        this._loadError = ex;
+    //        console.log("Failed to load in " + (Date.now() - start) + "ms");
+    //      }
+    //    }
 
-      // fs.readFile(this._path, this._encoding, function(error, content) {
-      //   if (error) {
-      //     this._loadError = error;
-      //   }
-      //   else {
-      //     try {
-      //       this._data = JSON.parse(content);
-      //       console.log("Loaded in " + (Date.now() - start) + "ms");
-      //     }
-      //     catch (ex) {
-      //       this._loadError = ex;
-      //       console.log("Failed to load in " + (Date.now() - start) + "ms");
-      //     }
-      //   }
-// 
-      //   this._loading = false;
-// 
-      //   var callbacks = this._loadCallbacks;
-      //   this._loadCallbacks = [];
-      //   callbacks.forEach(function(callback) {
-      //     callback(this._loadError, this._data);
-      //   }.bind(this));
-      // }.bind(this));
-    }
+    //    this._loading = false;
+
+    //     var callbacks = this._loadCallbacks;
+    //     this._loadCallbacks = [];
+    //     callbacks.forEach(function(callback) {
+    //       callback(this._loadError, this._data);
+    //     }.bind(this));
+    //   }.bind(this));
+    // }
   },
-  
+
   project: function(destinationProjection) {
     this._project(destinationProjection);
   },
 
   _project: function(mapProjection) {
     var doBounds = !this._projectedData[mapProjection];
-    
+
     if (this._projection !== mapProjection) {
       console.log("Projecting features...");
       start = Date.now();
 
       this._projectedData[mapProjection] = projector.project.FeatureCollection(this._projection, mapProjection, this._data);
 
-      console.log("Projected in " + (Date.now() - start) + "ms"); 
+      console.log("Projected in " + (Date.now() - start) + "ms");
     } else {
       console.log("Projection not necessary");
         this._projectedData[mapProjection] = this._data;
     }
-    
+
     // HACK
     if (FILTER_BY_EXTENTS && doBounds) {
       this._calculateBounds(this._projectedData[mapProjection]);
     }
   },
-  
+
   _calculateBounds: function(dataset) {
     return this._shapes(dataset).forEach(function(shape) {
       shape.bounds = this._shapeBounds(shape);
