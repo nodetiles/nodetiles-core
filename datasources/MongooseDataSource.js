@@ -1,9 +1,10 @@
-
-var fs = require("fs");
-var request = require("request");
+var mongoose = require('mongoose');
 var projector = require(__dirname + "/../lib/projector");
+var Response = require('./ResponseModel');
 
 var FILTER_BY_EXTENTS = true;
+
+var start;
 
 var A = 6378137,
     MAXEXTENT = 20037508.34,
@@ -11,8 +12,42 @@ var A = 6378137,
     D2R = Math.PI / 180,
     R2D = 180 / Math.PI; //20037508.342789244
 
+/**
+ * Turn stored parcel results into geoJSON
+ * @param  {Array} items An array of responses
+ * @return {Array}       An array of responses structured as geoJSON
+ */
+function resultsToGeoJSON(items, callback) {
+  var i;
+  var obj;
+  var newItems = [];
 
-var RemoteGeoJsonSource = function(options) {
+  for (i = 0; i < items.length; i++) {
+    obj = {};
+    obj.type = 'Feature';
+
+    // Get the shape
+    // Or if there isn't one, use the centroid.
+    if (items[i].geo_info.geometry !== undefined) {
+      obj.id = items[i].parcel_id;
+      obj.geometry = items[i].geo_info.geometry;
+    }else {
+      obj.id = items[i]._id;
+      obj.geometry = {
+        type: 'Point',
+        coordinates: items[i].geo_info.centroid
+      };
+    }
+
+    obj.properties = items[i];
+
+    newItems.push(obj);
+  }
+
+  callback(newItems);
+}
+
+var MongooseDataSource = function(options) {
   // Set basic options: projection, data path, dataset name, and encoding
   this._projection = projector.util.cleanProjString(options.projection || "EPSG:4326");
   this._path = options.path; // required
@@ -23,6 +58,8 @@ var RemoteGeoJsonSource = function(options) {
   }
   this.sourceName = this.name;
 
+  this.surveyId = options.surveyId;
+
   // loading synchronization
   this._loadCallbacks = [];
   this._loading = false;
@@ -32,10 +69,31 @@ var RemoteGeoJsonSource = function(options) {
   this._data = null;
   this._projectedData = {};
 
+  // Set up the mongoose database
+  this.collection = options.collection;
+  var mongooseOpts = {
+    db: {
+      w: 1,
+      safe: true,
+      native_parser: true // try true if things break?
+    }
+  };
+
+  if (options.mongoUser !== undefined) {
+    mongooseOpts.user = options.mongoUser;
+    mongooseOpts.pass = options.mongoPassword;
+  }
+
+  mongoose.connect(options.mongoHost, options.mongoDB, options.mongoPort, mongooseOpts);
+
+  this.db = mongoose.connection;
+  this.db.on('error', function (error) {
+    console.log('ERROR: ' + error.message);
+  });
 };
 
-RemoteGeoJsonSource.prototype = {
-  constructor: RemoteGeoJsonSource,
+MongooseDataSource.prototype = {
+  constructor: MongooseDataSource,
 
   _metersToLatLon: function(c) {
     return [
@@ -51,48 +109,87 @@ RemoteGeoJsonSource.prototype = {
     minXY = this._metersToLatLon([minX, minY]);
     maxXY = this._metersToLatLon([maxX, maxY]);
 
-    // Disregard this for now:
-    // We request parcel shape data using tile names, even though they are not
-    // rendered tiles. Since we're getting shape data, we can work with whatever
-    // zoom level produces a convenient spatial chunk of data.
-    // var vectorTileZoom = 17;
-    // var tiles = maptiles.getTileCoords(vectorTileZoom, [[, ], [, ]]);
-    // Let's do a query on the data based on our tiles 
-    // Do this later callback(this._loadError, data);
+    console.log("Getting shapes", minXY, maxXY);
 
+    // Generate the bounds
+    //var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
+
+    // Time the processes
+
+    // Get the responses
+    var conditions = {
+      survey: this.surveyId
+    };
+    var parsedBbox = [[minXY[0], minXY[1]], [maxXY[0],  maxXY[1]]];
+    conditions['geo_info.centroid'] = { '$within': { '$box': parsedBbox } };
+    
     var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
     var url = this._path + serializedBounds;
-    console.log("Getting data from", url);
+    // console.log("URL:", url);
 
-    var start = Date.now();
+    // console.log(conditions, parsedBbox);
 
-    request(url, function (error, response, body) {
-      if (error || response.statusCode !== 200) {
-        this._loadError = error;
-      }
-      else {
-        try {
-          this._data = JSON.parse(body);
-          console.log("Loaded " + this._data.features.length + " features in " + (Date.now() - start) + "ms");
-          console.log(url);
-        }
-        catch (ex) {
-          this._loadError = ex;
-          console.log("Failed to load in " + (Date.now() - start) + "ms");
-        }
-      }
+    var query = Response.find(conditions);   
+    query.select({'geo_info.centroid': 1});
 
-      this._project(mapProjection);
-      callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
+    // console.log("Query set");
 
-      // this._loading = false;
+    // Execute the query
+    start = Date.now();
+    query.lean().exec(function (error, responses) {
+      if (error) { console.log("DB error:", error); return; }
+      
 
-      // var callbacks = this._loadCallbacks;
-      // this._loadCallbacks = [];
-      // callbacks.forEach(function(callback) {
-      //   callback(this._loadError, this._data);
-      // }.bind(this));
+      console.log("Fetched responses in " + (Date.now() - start) + "ms");
+
+      // console.log("Got", responses.length, "responses");
+
+      start = Date.now();
+
+      resultsToGeoJSON(responses, function(data) {
+        this._data = {
+          type: "FeatureCollection",
+          features: data
+        };
+
+        start = Date.now();
+        this._project(mapProjection);
+
+        start = Date.now();
+        callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
+      }.bind(this));
     }.bind(this));
+
+
+    // Old stuff
+
+    // request(url, function (error, response, body) {
+    //   if (error || response.statusCode !== 200) {
+    //     this._loadError = error;
+    //   }
+    //   else {
+    //     try {
+    //       this._data = JSON.parse(body);
+    //       console.log("Loaded " + this._data.features.length + " features in " + (Date.now() - // start) + "ms");
+    //       console.log(url);
+    //     }
+    //     catch (ex) {
+    //       this._loadError = ex;
+    //       console.log("Failed to load in " + (Date.now() - start) + "ms");
+    //     }
+    //   }
+// 
+    //   this._project(mapProjection);
+    //   callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
+// 
+    //   // this._loading = false;
+// 
+    //   // var callbacks = this._loadCallbacks;
+    //   // this._loadCallbacks = [];
+    //   // callbacks.forEach(function(callback) {
+    //   //   callback(this._loadError, this._data);
+    //   // }.bind(this));
+    // }.bind(this));
 
 
     // Old stuff......
@@ -178,7 +275,7 @@ RemoteGeoJsonSource.prototype = {
     var doBounds = !this._projectedData[mapProjection];
 
     if (this._projection !== mapProjection) {
-      console.log("Projecting features...");
+      console.log("Projecting", this._data.features.length, "features");
       start = Date.now();
 
       this._projectedData[mapProjection] = projector.project.FeatureCollection(this._projection, mapProjection, this._data);
@@ -304,7 +401,7 @@ RemoteGeoJsonSource.prototype = {
   }
 };
 
-module.exports = RemoteGeoJsonSource;
+module.exports = MongooseDataSource;
 
 var intersects = function(a, b) {
   var xIntersects = (a.minX < b.maxX && a.minX > b.minX) ||
