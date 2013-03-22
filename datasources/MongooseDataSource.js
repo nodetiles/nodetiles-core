@@ -130,7 +130,7 @@ MongooseDataSource.prototype = {
     // console.log(conditions, parsedBbox);
 
     var query = Response.find(conditions);   
-    query.select({'geo_info.centroid': 1});
+    query.select({'geo_info.geometry': 1});
 
     // console.log("Query set");
 
