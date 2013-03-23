@@ -293,9 +293,12 @@ MongooseDataSource.prototype = {
   },
 
   _calculateBounds: function(dataset) {
-    return this._shapes(dataset).forEach(function(shape) {
-      shape.bounds = this._shapeBounds(shape);
-    }, this);
+
+    var shapes = this._shapes(dataset);
+    for (var i = shapes.length - 1; i >= 0; i--) {
+      shapes[i].bounds = this._shapeBounds(shapes[i]);
+    }
+    return shapes;
   },
 
   _filterByExtent: function(dataset, minX, minY, maxX, maxY) {
@@ -374,6 +377,9 @@ MongooseDataSource.prototype = {
   },
   
   _shapes: function(feature) {
+
+    // TODO - CONCAT is SLOW
+
     var shapes = [];
     if (feature.type === "FeatureCollection") {
       for (var i = feature.features.length - 1; i >= 0; i--) {
