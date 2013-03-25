@@ -85,7 +85,7 @@ var MongooseDataSource = function(options) {
   }
 
   mongoose.connect(options.mongoHost, options.mongoDB, options.mongoPort, mongooseOpts);
-
+  // mongoose.connect(options.mongoString);
   this.db = mongoose.connection;
   this.db.on('error', function (error) {
     console.log('ERROR: ' + error.message);
@@ -376,6 +376,7 @@ MongooseDataSource.prototype = {
     return bounds;
   },
   
+
   _shapes: function(feature) {
 
     // TODO - CONCAT is SLOW
@@ -383,7 +384,9 @@ MongooseDataSource.prototype = {
     var shapes = [];
     if (feature.type === "FeatureCollection") {
       for (var i = feature.features.length - 1; i >= 0; i--) {
-        shapes = shapes.concat(this._shapes(feature.features[i]));
+
+        //shapes = shapes.concat(this._shapes(feature.features[i]));
+        shapes.push(feature.features[i]);
       }
     }
     else if (feature.type === "Feature") {
@@ -402,7 +405,7 @@ MongooseDataSource.prototype = {
     else {
       shapes.push(feature);
     }
-    
+
     return shapes;
   }
 };
