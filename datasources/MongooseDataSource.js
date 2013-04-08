@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var projector = require(__dirname + "/../lib/projector");
 var Response = require('./ResponseModel');
+var Form = require('./FormModel');
 
 var FILTER_BY_EXTENTS = true;
 
@@ -14,10 +15,11 @@ var A = 6378137,
 
 /**
  * Turn stored parcel results into geoJSON
+ * TODO: Can save time and memory by not creating a new object here. 
  * @param  {Array} items An array of responses
  * @return {Array}       An array of responses structured as geoJSON
  */
-function resultsToGeoJSON(items, callback) {
+function resultsToGeoJSON(items, callback, filter) {
   var i;
   var obj;
   var newItems = [];
@@ -41,6 +43,11 @@ function resultsToGeoJSON(items, callback) {
 
     obj.properties = items[i];
 
+    // If there is a filer, we also want the key easily accessible.
+    if(filter) {
+      obj.properties[filter.key] = items[i].responses[filter.key];
+    }
+
     newItems.push(obj);
   }
 
@@ -59,6 +66,7 @@ var MongooseDataSource = function(options) {
   this.sourceName = this.name;
 
   this.surveyId = options.surveyId;
+  this.filter = options.filter;
 
   // loading synchronization
   this._loadCallbacks = [];
@@ -102,6 +110,95 @@ MongooseDataSource.prototype = {
     ];
   },
 
+  getMostRecentForm: function(forms, type) {
+    var i;
+
+    // find mobile forms by default
+    if (type === undefined) {
+      type = "mobile";
+    }
+
+    for (i = 0; i < forms.length; i += 1) {
+      if (forms[i]['type'] === type) {
+        return forms[i];
+      }
+    }
+  },
+
+  // Helper method used by the recursive getFlattenedForm
+  flattenForm: function(question, flattenedForm) {
+
+    // Add the question to the list of questions
+    // Naive -- takes more space than needed (because it includes subquestions)
+    flattenedForm.push(question);
+
+    // Check if there are sub-questions associated with any of the answers
+    for(var i = 0; i < question.answers.length; i++) {
+      var answer = question.answers[i];
+
+      if (answer.questions !== undefined) {
+        for(var j = 0; j < answer.questions.length; j++) {
+          var q = answer.questions[j];
+          flattenedForm.push(this.flattenForm(q, flattenedForm));
+        }
+      }
+    }
+
+    return flattenedForm;
+  },
+
+  // Returns the most recent form as a flat list of question objects
+  // Objects have name (functions as id), text (label of the question)
+  getFlattenedForm: function(forms) {
+    var i;
+    var question;
+    var mostRecentForm = this.getMostRecentForm(forms);
+    var flattenedForm = [];
+    var distinctQuestions = [];
+
+
+    // Process the form if we have one
+    if (mostRecentForm !== undefined) {
+
+      for (i = 0; i < mostRecentForm.questions.length; i++) {
+
+        question = mostRecentForm.questions[i];
+        flattenedForm = flattenedForm.concat(this.flattenForm(question, flattenedForm));
+      }
+
+      // Make sure there's only one question per ID. 
+      var questionNames = [];
+      for (i = 0; i < flattenedForm.length; i++) {
+        question = flattenedForm[i];
+
+        if (questionNames.indexOf(question.name) === -1) {
+          questionNames.push(question.name);
+          distinctQuestions.push(question);
+        }
+      }
+    }
+
+    return distinctQuestions;
+  },
+
+
+  getForm: function(surveyId, callback) {
+    // Get the form data 
+    conditions = {
+      survey: surveyId
+    };
+    var formQuery = Form.find(conditions);
+    formQuery.select();
+    formQuery.lean().exec(function(error, forms) {
+      if (error) { console.log(error); return; }
+
+      console.log("Got forms", forms.length);
+
+      flattenedForm = this.getFlattenedForm(forms);
+      callback(flattenedForm);
+    }.bind(this));
+  },
+
   getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
     var data;
 
@@ -111,9 +208,6 @@ MongooseDataSource.prototype = {
 
     console.log("Getting shapes", minXY, maxXY);
 
-    // Generate the bounds
-    //var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
-
     // Time the processes
 
     // Get the responses
@@ -122,23 +216,32 @@ MongooseDataSource.prototype = {
     };
     var parsedBbox = [[minXY[0], minXY[1]], [maxXY[0],  maxXY[1]]];
     conditions['geo_info.centroid'] = { '$within': { '$box': parsedBbox } };
-    
+
     var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
     var url = this._path + serializedBounds;
     // console.log("URL:", url);
 
     // console.log(conditions, parsedBbox);
 
-    var query = Response.find(conditions);   
-    query.select({'geo_info.geometry': 1});
+    // Only select the geometry field
+    var selectConditions = {
+      'geo_info.geometry': 1
+    };
 
-    // console.log("Query set");
+    // If there is a filter, select that data field 
+    if(this.filter !== undefined) {
+      selectConditions['responses.' + this.filter.key] = 1;
+    }
+    console.log("SElect conditions", selectConditions);
+
+    // Set the query
+    var query = Response.find(conditions);
+    query.select(selectConditions);
 
     // Execute the query
     start = Date.now();
     query.lean().exec(function (error, responses) {
       if (error) { console.log("DB error:", error); return; }
-      
 
       console.log("Fetched responses in " + (Date.now() - start) + "ms");
 
@@ -146,6 +249,7 @@ MongooseDataSource.prototype = {
 
       start = Date.now();
 
+      // Finish processing the responses...
       resultsToGeoJSON(responses, function(data) {
         this._data = {
           type: "FeatureCollection",
@@ -157,114 +261,13 @@ MongooseDataSource.prototype = {
 
         start = Date.now();
         callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
-      }.bind(this));
+      }.bind(this), this.filter);
     }.bind(this));
-
-
-    // Old stuff
-
-    // request(url, function (error, response, body) {
-    //   if (error || response.statusCode !== 200) {
-    //     this._loadError = error;
-    //   }
-    //   else {
-    //     try {
-    //       this._data = JSON.parse(body);
-    //       console.log("Loaded " + this._data.features.length + " features in " + (Date.now() - // start) + "ms");
-    //       console.log(url);
-    //     }
-    //     catch (ex) {
-    //       this._loadError = ex;
-    //       console.log("Failed to load in " + (Date.now() - start) + "ms");
-    //     }
-    //   }
-// 
-    //   this._project(mapProjection);
-    //   callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
-// 
-    //   // this._loading = false;
-// 
-    //   // var callbacks = this._loadCallbacks;
-    //   // this._loadCallbacks = [];
-    //   // callbacks.forEach(function(callback) {
-    //   //   callback(this._loadError, this._data);
-    //   // }.bind(this));
-    // }.bind(this));
-
-
-    // Old stuff......
-
-    // If there already is data at our desired projection:
-    // if (this._projectedData[mapProjection]){
-    // 
-    //   // Filter the data to match the given bounds
-    //   data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
-    //   callback(null, data);
-    // }
-    // else {
-    // 
-    //   // If we don't already have data, load it
-    //   this.load(function(error, data) {
-    //     if (error){
-    //       this._loadError = error;
-    //     }
-    //     else if (!this._projectedData[mapProjection]) {
-    //       // TODO: why are we projecting?
-    //       // Shouldn't the data already come projected?
-    //       this._project(mapProjection);
-    //     }
-    // 
-    //     // Filter the data by the given extent
-    //     // TODO: instead, we should already have the data indexed by extent.
-    //     // Or we can just request this square from the server.
-    //     data = this._filterByExtent(this._projectedData[mapProjection], minX, minY, maxX, maxY);
-    //     callback(this._loadError, data);
-    //   }.bind(this));
-    // }
   },
 
   load: function(callback) {
     // Load becomes a noop
     return;
-
-    //if (this._data || this._loadError) {
-    //  callback(this._loadError, this._data);
-    //  return;
-    //}
-
-    // callback && this._loadCallbacks.push(callback);
-
-    //if (!this._loading) {
-    //  this._loading = true;
-    //
-    //  var start = Date.now();
-    //  console.log("Loading data from " + this._path + "...");
-
-    //  var request = require('request');
-    //  request(this._path, function (error, response, body) {
-    //    if (error || response.statusCode !== 200) {
-    //      this._loadError = error;
-    //    }
-    //    else {
-    //      try {
-    //        this._data = JSON.parse(body);
-    //        console.log("Loaded in " + (Date.now() - start) + "ms");
-    //      }
-    //      catch (ex) {
-    //        this._loadError = ex;
-    //        console.log("Failed to load in " + (Date.now() - start) + "ms");
-    //      }
-    //    }
-
-    //    this._loading = false;
-
-    //     var callbacks = this._loadCallbacks;
-    //     this._loadCallbacks = [];
-    //     callbacks.forEach(function(callback) {
-    //       callback(this._loadError, this._data);
-    //     }.bind(this));
-    //   }.bind(this));
-    // }
   },
 
   project: function(destinationProjection) {
