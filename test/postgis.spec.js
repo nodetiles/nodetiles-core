@@ -94,7 +94,7 @@ describe('PostGIS Data Source', function() {
         var point = shapes.features[0];
         var geometry = point.geometry;
         
-        expect(geometry.coordinates[0]).to.equal(-13635985.512598947);
+        expect(geometry.coordinates[0]).to.equal(-13635985.512598945);
         expect(geometry.coordinates[1]).to.equal(4547143.855632217);
         done();
       });
@@ -103,7 +103,7 @@ describe('PostGIS Data Source', function() {
         var polygon = shapes.features[4];
         var geometry = polygon.geometry;
         
-        expect(geometry.coordinates[0][0][0]).to.equal(-13635985.512598947);
+        expect(geometry.coordinates[0][0][0]).to.equal(-13635985.512598945);
         expect(geometry.coordinates[0][0][1]).to.equal(4547143.855632217);
         done();
       });
