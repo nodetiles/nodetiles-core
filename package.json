@@ -40,5 +40,8 @@
     "mocha":  "~1.9",
     "chai": "~1.5",
     "sinon": "~1.6"
+  },
+  "scripts": {
+    "test": "mocha"
   }
 }
