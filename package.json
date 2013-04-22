@@ -1,6 +1,6 @@
 {
   "name": "nodetiles-core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Joyful map rendering with Node.js.",
   "contributors": [
     {
@@ -20,35 +20,25 @@
   "main": "./index",
   "repository": {
     "type": "git",
-    "url": "https://github.com/localdata/nodetiles.git"
+    "url": "https://github.com/codeforamerica/nodetiles.git"
   },
   "engines": {
     "node": ">0.6.x",
-    "npm": "1.1.x"
+    "npm":  ">1.1.x"
   },
   "dependencies": {
-    "async": "~0.1.x",
-    "lodash": "~0.6.1",
-    "canvas": "0.12.x",
-    "mongoose": "~3.5.6",
-    "proj4js": "~0.3.0",
-    "proj4js-defs": ">=0.0.1",
-    "pg": "~0.8.4",
-    "carto": "~0.9.3",
-    "shp": "https://github.com/yuletide/node-shp/tarball/master",
-    "request": "~2.0.0"
+    "async": "~0.2",
+    "lodash": "~1.2",
+    "canvas": "~1.0",
+    "proj4js":"~0.3.0",
+    "proj4js-defs":">=0.0.1",
+    "pg":"~1.0",
+    "carto":"~0.9.3",
+    "shp":"https://github.com/yuletide/node-shp/tarball/master"
   },
   "devDependencies": {
-    "mocha": "~1.4.1",
+    "mocha":  "~1.4.1",
     "chai": "~1.2.0",
     "sinon": "~1.4.2"
-  },
-  "readme": "Nodetiles-Core\n=============\nNodetiles-core is a javascript library for rendering map tiles suitable for slippy-maps and static images. Features include:\n\n- **Flexible Data-connectors**: We offer GeoJson and PostGIS connectors out-of-the-box, but it's easy to build your own. \n- **Map Projections**: Transform data between more [3,900+](https://github.com/yuletide/node-proj4js-defs/blob/master/epsg.js) EPSG projections using Proj4.js\n- **CartoCSS Support**: We support many (if not most) stylesheet features of [CartCSS](http://mapbox.com/tilemill/docs/manual/carto/) making it trivial to import your map styles from tools like Tilemill\n- **Slippy-map URL helpers**: Easily serve map tiles, UTFGrids, and Tile.json. Check out [nodetiles-init](https://github.com/codeforamerica/nodetiles-init) for a simple scaffold.\n- **Static maps**: If slipply-maps aren't your style, generate static images of any dimension; checkout [nodetiles-example-static](https://github.com/codeforamerica/nodetiles-example-static) for examples.\n- **Joyfully simple, pluggable, flexible, powerful**: We built Nodetiles to be easily understandable, extensible and a joy to use. It's built with Javascript and tries to provide a solid foundation of tools that are still easy to understand, extend or replace depending on your needs. [File an issue](https://github.com/codeforamerica/nodetiles-core/issues/new) if Nodetiles can't do what you need.\n\nScreenshot\n-------\n\n![Nodetiles Screenshot](https://raw.github.com/codeforamerica/nodetiles-core/master/screenshot.png)\n\n\nExample\n-------\n```\n/* Set up the libraries */\nvar nodetiles = require('nodetiles-core'),\n    GeoJsonSource = nodetiles.datasources.GeoJson,\n    Projector = nodetiles.projector,\n    fs = require('fs'); // we'll output to a file\n    \n/* Create your map context */\nvar map = new nodetiles.Map({\n    projection: \"EPSG:4326\" // set the projection of the map\n});\n\n/* Add some data */\nmap.addData(new GeoJsonSource({ \n  name: \"world\",\n  path: __dirname + '/countries.geojson', \n  projection: \"EPSG:900913\"\n}));\n\n/* Link your Carto stylesheet */\nmap.addStyle(fs.readFileSync('./style.mss','utf8'));\n\n/* Render out the map to a file */\nmap.render({\n  // Make sure your bounds are in the same projection as the map\n  bounds: {minX: -180, minY: -90, maxX: 180, maxY: 90},\n  width: 800,   // number of pixels to output\n  height: 400,\n  callback: function(err, canvas) {\n    var file = fs.createWriteStream(__dirname + '/map.png'),\n        stream = canvas.createPNGStream();\n\n    stream.on('data', function(chunk){\n      file.write(chunk);\n    });\n\n    stream.on('end', function(){\n      console.log('Saved map.png!');\n    });\n  }\n});\n\n\n```\n\nThanks\n-------\n\nBig THANKS to [Tom Carden](https://github.com/RandomEtc) whose [original gist](https://gist.github.com/668577) inspired this project. He also has other very [useful](https://github.com/RandomEtc/nodemap) [projects](https://github.com/RandomEtc/shapefile-js).\n\nProjections\n-----------\n[Supported projections](https://github.com/yuletide/node-proj4js-defs)\n\n\n\n\n",
-  "readmeFilename": "README.md",
-  "_id": "nodetiles-core@0.0.1",
-  "dist": {
-    "shasum": "79bd25f74719d91cf109a6fe04cba7ef22258807"
-  },
-  "_from": "https://github.com/localdata/nodetiles-core/tarball/remotegeojson",
-  "_resolved": "https://github.com/localdata/nodetiles-core/tarball/remotegeojson"
+  }
 }
