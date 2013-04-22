@@ -15,7 +15,7 @@ var A = 6378137,
 
 /**
  * Turn stored parcel results into geoJSON
- * TODO: Can save time and memory by not creating a new object here. 
+ * TODO: Can save time and memory by not creating a new object here.
  * @param  {Array} items An array of responses
  * @return {Array}       An array of responses structured as geoJSON
  */
@@ -45,7 +45,10 @@ function resultsToGeoJSON(items, callback, filter) {
 
     // If there is a filer, we also want the key easily accessible.
     if(filter) {
-      obj.properties[filter.key] = items[i].responses[filter.key];
+      // TODO: Handle the undefined condition
+      if(items[i].hasOwnProperty("responses") && items[i].responses.hasOwnProperty(filter.key)) {
+        obj.properties[filter.key] = items[i].responses[filter.key];
+      }
     }
 
     newItems.push(obj);
@@ -57,7 +60,6 @@ function resultsToGeoJSON(items, callback, filter) {
 var MongooseDataSource = function(options) {
   // Set basic options: projection, data path, dataset name, and encoding
   this._projection = projector.util.cleanProjString(options.projection || "EPSG:4326");
-  this._path = options.path; // required
   this._encoding = options.encoding || "utf8";
   this.name = options.name || options.path.slice(options.path.lastIndexOf("/") + 1);
   if (this.name.indexOf(".") !== -1) {
@@ -77,24 +79,14 @@ var MongooseDataSource = function(options) {
   this._data = null;
   this._projectedData = {};
 
+  // Get the mongoose connection from the options
+  this.db = options.db;
+
   // Set up the mongoose database
-  this.collection = options.collection;
-  var mongooseOpts = {
-    db: {
-      w: 1,
-      safe: true,
-      native_parser: true // try true if things break?
-    }
-  };
+  // this.collection = options.collection;
 
-  if (options.mongoUser !== undefined) {
-    mongooseOpts.user = options.mongoUser;
-    mongooseOpts.pass = options.mongoPassword;
-  }
-
-  mongoose.connect(options.mongoHost, options.mongoDB, options.mongoPort, mongooseOpts);
+  // mongoose.connect(options.mongoHost, options.mongoDB, options.mongoPort, mongooseOpts);
   // mongoose.connect(options.mongoString);
-  this.db = mongoose.connection;
   this.db.on('error', function (error) {
     console.log('ERROR: ' + error.message);
   });
@@ -166,7 +158,7 @@ MongooseDataSource.prototype = {
         flattenedForm = flattenedForm.concat(this.flattenForm(question, flattenedForm));
       }
 
-      // Make sure there's only one question per ID. 
+      // Make sure there's only one question per ID.
       var questionNames = [];
       for (i = 0; i < flattenedForm.length; i++) {
         question = flattenedForm[i];
@@ -183,7 +175,7 @@ MongooseDataSource.prototype = {
 
 
   getForm: function(surveyId, callback) {
-    // Get the form data 
+    // Get the form data
     conditions = {
       survey: surveyId
     };
@@ -191,8 +183,6 @@ MongooseDataSource.prototype = {
     formQuery.select();
     formQuery.lean().exec(function(error, forms) {
       if (error) { console.log(error); return; }
-
-      console.log("Got forms", forms.length);
 
       flattenedForm = this.getFlattenedForm(forms);
       callback(flattenedForm);
@@ -202,11 +192,9 @@ MongooseDataSource.prototype = {
   getShapes: function(minX, minY, maxX, maxY, mapProjection, callback) {
     var data;
 
-    // Hacky! 
+    // Hacky!
     minXY = this._metersToLatLon([minX, minY]);
     maxXY = this._metersToLatLon([maxX, maxY]);
-
-    console.log("Getting shapes", minXY, maxXY);
 
     // Time the processes
 
@@ -218,8 +206,6 @@ MongooseDataSource.prototype = {
     conditions['geo_info.centroid'] = { '$within': { '$box': parsedBbox } };
 
     var serializedBounds = minXY[0] + ',' + minXY[1] + ',' + maxXY[0] + ',' + maxXY[1];
-    var url = this._path + serializedBounds;
-    // console.log("URL:", url);
 
     // console.log(conditions, parsedBbox);
 
@@ -228,11 +214,10 @@ MongooseDataSource.prototype = {
       'geo_info.geometry': 1
     };
 
-    // If there is a filter, select that data field 
+    // If there is a filter, select that data field
     if(this.filter !== undefined) {
       selectConditions['responses.' + this.filter.key] = 1;
     }
-    console.log("SElect conditions", selectConditions);
 
     // Set the query
     var query = Response.find(conditions);
@@ -243,9 +228,7 @@ MongooseDataSource.prototype = {
     query.lean().exec(function (error, responses) {
       if (error) { console.log("DB error:", error); return; }
 
-      console.log("Fetched responses in " + (Date.now() - start) + "ms");
-
-      // console.log("Got", responses.length, "responses");
+      console.log("Fetched " + responses.length + " responses in " + (Date.now() - start) + "ms");
 
       start = Date.now();
 
@@ -261,6 +244,7 @@ MongooseDataSource.prototype = {
 
         start = Date.now();
         callback(this._loadError, this._shapes(this._projectedData[mapProjection]));
+
       }.bind(this), this.filter);
     }.bind(this));
   },
@@ -308,24 +292,24 @@ MongooseDataSource.prototype = {
     if (!FILTER_BY_EXTENTS) {
       return dataset;
     }
-    
+
     var extent = {
       minX: minX,
       minY: minY,
       maxX: maxX,
       maxY: maxY
     };
-    
+
     return this._shapes(dataset).filter(function(shape) {
       // return intersects(this._shapeBounds(shape), extent);
       return intersects(shape.bounds, extent);
     }.bind(this));
   },
-  
+
   _shapeBounds: function(shape) {
     shape = shape.geometry || shape;
     var coordinates = shape.coordinates;
-    
+
     if (shape.type === "Point") {
       return {
         minX: coordinates[0],
@@ -334,14 +318,14 @@ MongooseDataSource.prototype = {
         maxY: coordinates[1]
       };
     }
-    
+
     var bounds = {
       minX: Infinity,
       minY: Infinity,
       maxX: -Infinity,
       maxY: -Infinity
     };
-    
+
     if (shape.type === "Polygon" || shape.type === "MultiLineString") {
       for (var i = coordinates.length - 1; i >= 0; i--) {
         var coordinateSet = coordinates[i];
@@ -375,10 +359,10 @@ MongooseDataSource.prototype = {
         bounds.maxY = Math.max(bounds.maxY, coordinates[i][1]);
       }
     }
-    
+
     return bounds;
   },
-  
+
 
   _shapes: function(feature) {
 
@@ -419,10 +403,10 @@ var intersects = function(a, b) {
   var xIntersects = (a.minX < b.maxX && a.minX > b.minX) ||
                     (a.maxX < b.maxX && a.maxX > b.minX) ||
                     (a.minX < b.minX && a.maxX > b.maxX);
-                    
+
   var yIntersects = (a.minY < b.maxY && a.minY > b.minY) ||
                     (a.maxY < b.maxY && a.maxY > b.minY) ||
                     (a.minY < b.minY && a.maxY > b.maxY);
-                    
+
   return xIntersects && yIntersects;
 };
