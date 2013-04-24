@@ -75,9 +75,9 @@ describe('PostGIS Data Source', function() {
         
     it('Projects/transforms the bounding box (in the Map\'s projection), into the projecion of the datasource', function(done){
       var bbDatasource = querySpy.args[0][1];
-      expect(bbDatasource[0]).to.closeTo(-122.51953125000001, "should project minX"); // <-- not sure why so many significant digits 
-      expect(bbDatasource[1]).to.closeTo(37.71859032558813, "should project minY");
-      expect(bbDatasource[2]).to.closeTo(-122.431640625, "should project maxX");
+      expect(bbDatasource[0]).to.closeTo(-122.51953125000001, 0.0000001); // Just make sure it's within ~1cm
+      expect(bbDatasource[1]).to.closeTo(37.71859032558813, 0.0000001);
+      expect(bbDatasource[2]).to.closeTo(-122.431640625, 0.0000001);
       expect(bbDatasource[3]).to.closeTo(37.78808138412046, (0.1*10), "should project maxY"); // <-- weird rounding on this guy
       done();
     });
@@ -94,7 +94,7 @@ describe('PostGIS Data Source', function() {
         var point = shapes.features[0];
         var geometry = point.geometry;
         
-        expect(geometry.coordinates[0]).to.equal(-13635985.512598947);
+        expect(geometry.coordinates[0]).to.equal(-13635985.512598945);
         expect(geometry.coordinates[1]).to.equal(4547143.855632217);
         done();
       });
@@ -103,7 +103,7 @@ describe('PostGIS Data Source', function() {
         var polygon = shapes.features[4];
         var geometry = polygon.geometry;
         
-        expect(geometry.coordinates[0][0][0]).to.equal(-13635985.512598947);
+        expect(geometry.coordinates[0][0][0]).to.equal(-13635985.512598945);
         expect(geometry.coordinates[0][0][1]).to.equal(4547143.855632217);
         done();
       });
