@@ -2,7 +2,7 @@ Nodetiles-Core
 =============
 Nodetiles-core is a javascript library for rendering map tiles suitable for slippy-maps and static images. Features include:
 
-- **Flexible Data-connectors**: We offer GeoJson and PostGIS connectors out-of-the-box, but it's easy to build your own. 
+- **Flexible Data-connectors**: We offer GeoJson and Shapefile connectors out-of-the-box, but it's easy to build your own. 
 - **Map Projections**: Transform data between more [3,900+](https://github.com/yuletide/node-proj4js-defs/blob/master/epsg.js) EPSG projections using Proj4.js
 - **CartoCSS Support**: We support many (if not most) stylesheet features of [CartCSS](http://mapbox.com/tilemill/docs/manual/carto/) making it trivial to import your map styles from tools like Tilemill
 - **Slippy-map URL helpers**: Easily serve map tiles, UTFGrids, and Tile.json. Check out [nodetiles-init](https://github.com/codeforamerica/nodetiles-init) for a simple scaffold.
