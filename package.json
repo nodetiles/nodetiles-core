@@ -20,7 +20,7 @@
   "main": "./index",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeforamerica/nodetiles.git"
+    "url": "https://github.com/nodetiles/nodetiles-core.git"
   },
   "engines": {
     "node": ">0.8.x",
