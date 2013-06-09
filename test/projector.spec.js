@@ -14,6 +14,16 @@ var projector = require(__dirname + '/../index').projector;
 // -122.431640625 37.71859032558813
 
 describe('Projector', function() {
+  
+  var sandbox;
+  beforeEach(function () {
+    sandbox = sinon.sandbox.create();
+  });
+
+  afterEach(function () {
+    sandbox.restore();
+  });
+  
   describe('utils', function() {
     it('Can correctly convert from Tiles to Spherical Mercator (meters)', function(done) {
       var tile = [12, 654, 1584];
@@ -62,16 +72,16 @@ describe('Projector', function() {
   });
   
   describe("project (proj4)", function() {
-    it('Point: converts a from lat/lon to spherical mercator meters', function(done) {
+    it('Point: converts a from lat/lon to spherical mercator meters', function() {
       var c = [-122.51953125, 37.75334401310656];
       var metersCorrect = [-13638811.83098057, 4544639.953723437]; // or 438?
 
       var projected = projector.project.Point("EPSG:4326","EPSG:900913", c);
       expect(projected[0]).to.equal(metersCorrect[0], 'should calculate x');
       expect(projected[1]).to.equal(metersCorrect[1], 'should calculate y');
-      done();
     });
-    it('Feature: converts polygon from lat/lon to spherical mercator meters', function(done) {
+    
+    it('Feature: converts polygon from lat/lon to spherical mercator meters', function() {
       var feature = {
         name: "Sunset",
         geometry: { 
@@ -98,7 +108,33 @@ describe('Projector', function() {
       };
       var projected = projector.project.Feature("EPSG:4326","EPSG:900913", feature);
       expect(projected).to.deep.equal(expectedFeature, 'should calculate x');
-      done();
+    });
+    
+    it("should not use Proj4 for 4326 <-> 900913", function() {
+      var Proj4js = require('proj4js');
+      var transform = sandbox.spy(Proj4js, "transform");
+      
+      projector.project.Point("EPSG:4326","EPSG:900913", [-122.51953125, 37.75334401310656]);
+      expect(transform.called).to.equal(false);
+      
+      projector.project.Point("EPSG:900913","EPSG:4326", [-122.51953125, 37.75334401310656]);
+      expect(transform.called).to.equal(false);
+    });
+    
+    it("should use Proj4 for 4326 -> ??", function() {
+      var Proj4js = require('proj4js');
+      var transform = sandbox.spy(Proj4js, "transform");
+      
+      projector.project.Point("EPSG:4326","EPSG:2227", [-122.51953125, 37.75334401310656]);
+      expect(transform.called).to.equal(true);
+    });
+    
+    it("should use Proj4 for 900913 -> ??", function() {
+      var Proj4js = require('proj4js');
+      var transform = sandbox.spy(Proj4js, "transform");
+      
+      projector.project.Point("EPSG:900913","EPSG:2227", [-122.51953125, 37.75334401310656]);
+      expect(transform.called).to.equal(true);
     });
   });
 });
