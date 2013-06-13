@@ -1,7 +1,6 @@
 var Map = require(__dirname + '/lib/Map'),
     GeoJson = require(__dirname + '/datasources/GeoJson'),
     RemoteGeoJson = require(__dirname + '/datasources/RemoteGeoJson'),
-    Mongoose = require(__dirname + '/datasources/MongooseDataSource'),
     PostGIS = require(__dirname + '/datasources/PostGIS'),
     Shp = require(__dirname + '/datasources/Shp'),
     projector = require(__dirname + '/lib/projector'),
@@ -19,7 +18,6 @@ module.exports = {
   datasources: {
     GeoJson: GeoJson,
     RemoteGeoJson: RemoteGeoJson,
-    Mongoose: Mongoose,
     PostGIS: PostGIS,
     Shp: Shp
   },
@@ -27,7 +25,7 @@ module.exports = {
    * Transform between projections
    */
   projector: projector,
-  
+
   /**
    * Routing Middleware
    */
