@@ -40,6 +40,8 @@ describe('cartoRenderer', function() {
         return projector.project[data.type]("EPSG:4326", mapProjection, data);
       }
     });
+    
+    console.log("\nbounds:", bounds);
   
     map.render({
       bounds: {minX: bounds[0], minY: bounds[1], maxX: bounds[2], maxY: bounds[3]},
