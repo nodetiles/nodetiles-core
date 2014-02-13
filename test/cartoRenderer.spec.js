@@ -57,14 +57,26 @@ describe('cartoRenderer', function() {
         ctx.drawImage(expectedImage, 0, 0, expectedImage.width, expectedImage.height);
         var aData = ctx.getImageData(0, 0, expectedImage.width, expectedImage.height).data;
         var bData = result.getContext('2d').getImageData(0, 0, expectedImage.width, expectedImage.height).data;
-        for (var i = aData.length; i--;) {
-          if (aData[i] !== bData[i]) {
-            console.log("Diff at ", i, "=", Math.abs(aData[i] - bData[i]));
+        var width = 256;
+        var i, j;
+        for (i = 0; i < aData.length; i += 4) {
+          for (j = 0; j < 4; j++) {
+            var index = i + j;
+            if (aData[index] !== bData[index]) {
+              var col = (i / 4) % 256;
+              var row = Math.floor((i / 4) / 256);
+              console.log("Diff at " + col + ", " + row + " channel ", j, "=", aData[index], "vs.", bData[index]);
+            }
           }
         }
+        // for (var i = aData.length; i--;) {
+        //   if (aData[i] !== bData[i]) {
+        //     console.log("Diff at ", i, "=", Math.abs(aData[i] - bData[i]));
+        //   }
+        // }
         
         // real test
-        expect(imagediff.equal(result, expectedImage, 100)).to.be.true;
+        expect(imagediff.equal(result, tmpCanvas, 100)).to.be.true;
         done();
       }
     });
