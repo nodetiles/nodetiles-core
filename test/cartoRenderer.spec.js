@@ -11,13 +11,15 @@ var projector = nodetiles.projector;
 describe('cartoRenderer', function() {
   
   it('should draw markers', function(done) {
-    var style = '#data {\
-      marker-fill: #ff530d;\
-      marker-line-color: #fff;\
-      marker-width: 8;\
-      marker-line-width: 2;\
-      marker-allow-overlap: true;\
-    }';
+    var style = '\
+      Map {background-color: rgba(122, 122, 122, 1);}\
+      #data {\
+        marker-fill: #ff530d;\
+        marker-line-color: #fff;\
+        marker-width: 8;\
+        marker-line-width: 2;\
+        marker-allow-overlap: true;\
+      }';
     var data = {
       "type": "FeatureCollection",                                
       "features": [
@@ -48,9 +50,9 @@ describe('cartoRenderer', function() {
       zoom: 12,
       callback: function(err, result) {
         result.createPNGStream().pipe(fs.createWriteStream(__dirname + '/markers.output.png'));
-        result.toDataURL('image/png', function(err, str){
-          console.log("OUTPUT:", str);
-        });
+        // result.toDataURL('image/png', function(err, str){
+        //   console.log("OUTPUT:", str);
+        // });
         
         var expectedImage = new Canvas.Image();
         expectedImage.src = fs.readFileSync(__dirname + '/markers.expected.png');
@@ -81,7 +83,7 @@ describe('cartoRenderer', function() {
         // }
         
         // real test
-        expect(imagediff.equal(result, tmpCanvas, 100)).to.be.true;
+        expect(imagediff.equal(result, tmpCanvas, 20)).to.be.true;
         done();
       }
     });
