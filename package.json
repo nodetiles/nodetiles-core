@@ -2,7 +2,7 @@
   "name": "nodetiles-core",
   "version": "0.0.3",
   "description": "Joyful map rendering with Node.js.",
-  "contributors": [ 
+  "contributors": [
     {
       "name": "Rob Bracket",
       "email": "rob@codeforamerica.org"
@@ -10,7 +10,7 @@
     {
       "name": "Ben Sheldon",
       "email": "ben@codeforamerica.org"
-    }, 
+    },
     {
       "name": "Alex Yule",
       "email": "alexy@codeforamerica.org"
@@ -24,21 +24,23 @@
   },
   "engines": {
     "node": ">0.8.x",
-    "npm":  ">1.1.x"
+    "npm": ">1.1.x"
   },
   "dependencies": {
     "async": "~0.2",
     "lodash": "~1.2",
     "canvas": "~1.0",
-    "proj4js":"~0.3.0",
-    "proj4js-defs":">=0.0.1",
-    "carto":"~0.9.3",
-    "shp":"https://github.com/yuletide/node-shp/tarball/master"
+    "proj4js": "~0.3.0",
+    "proj4js-defs": ">=0.0.1",
+    "carto": "~0.9.3",
+    "shp": "https://github.com/yuletide/node-shp/tarball/master"
   },
   "devDependencies": {
-    "mocha":  "~1.9",
-    "chai": "~1.5",
-    "sinon": "~1.6"
+    "mocha": "~1.17.1",
+    "chai": "~1.9.0",
+    "sinon": "~1.8.0",
+    "istanbul": "~0.2.4",
+    "coveralls": "~2.7.1"
   },
   "scripts": {
     "test": "mocha"
