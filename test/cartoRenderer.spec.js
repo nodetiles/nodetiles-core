@@ -70,7 +70,7 @@ describe('cartoRenderer', function() {
             if (aData[index] !== bData[index]) {
               var col = (i / 4) % 256;
               var row = Math.floor((i / 4) / 256);
-              console.log("Diff at " + col + ", " + row + " channel ", j, "=", aData[index], "vs.", bData[index]);
+              console.log("Diff at " + col + ", " + row + " channel ", j, "=", Math.abs(aData[index] - bData[index]), "(", aData[index], "vs.", bData[index], ")");
             }
           }
         }
