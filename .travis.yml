@@ -2,3 +2,13 @@ language: node_js
 node_js:
     - "0.10"
     - "0.8"
+before_script:
+    - "gem install travis-artifacts"
+after_script:
+    - "travis-artifacts upload --path test/markers.output.png"
+env:
+   global:
+       - "ARTIFACTS_AWS_REGION=us-east-1"
+       - "ARTIFACTS_S3_BUCKET=nodetiles-travis-artifacts"
+       - secure: "BYZ+3Lzc4kPw8NRbRHWc5lJKLO3JLDFPofs1JZe95aOKm7EpCbR6JtobiD4T+hMxOtjs2xVStqz78rHqA+K/tZrw3D4EDzMswtaZciFYQFufdGjXRtts8I5xvEytkwy6rtwSQImR9qCBYkUji7mz8Wqzr9diZwJNA/WhG/PUUTk="
+       - secure: "BhBfysrNrGUr/fuLpTeuQPsBlf4UX1+HJ9b8pDkS20AaK7WhXSuAXlJzIcRVxs+NlGoNicwaRFMhjWe3HE8Al2vwrBiYalEQIP07Z0/OW6d6OZfs/MC+oRufQ9pwyuf7Az4iZXVSCVa4X5q2AzTwwyL8x+uqADT/CL15RFZhBGc="

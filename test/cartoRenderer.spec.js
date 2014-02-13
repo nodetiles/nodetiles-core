@@ -49,6 +49,7 @@ describe('cartoRenderer', function() {
       height: 256,
       zoom: 12,
       callback: function(err, result) {
+        result.createPNGStream().pipe(fs.createWriteStream(__dirname + '/markers.output.png'));
         var expectedImage = new Canvas.Image();
         expectedImage.src = fs.readFileSync(__dirname + '/markers.expected.png');
         // expect(imagediff.equal(result, expectedImage, 100)).to.be.true;
