@@ -3,7 +3,7 @@ var expect = require('chai').expect;
 var sinon = require('sinon');
 var imagediff = require('imagediff');
 var fs = require('fs');
-var canvas = require('canvas');
+var Canvas = require('canvas');
 // lib
 var nodetiles = require('../index');
 var projector = nodetiles.projector;
@@ -47,8 +47,23 @@ describe('cartoRenderer', function() {
       height: 256,
       zoom: 12,
       callback: function(err, result) {
-        var expectedImage = new canvas.Image();
+        var expectedImage = new Canvas.Image();
         expectedImage.src = fs.readFileSync(__dirname + '/markers.expected.png');
+        // expect(imagediff.equal(result, expectedImage, 100)).to.be.true;
+        
+        // reproduce test logic
+        var tmpCanvas = new Canvas(expectedImage.width, expectedImage.height),
+            ctx = tmpCanvas.getContext('2d');
+        ctx.drawImage(expectedImage, 0, 0, expectedImage.width, expectedImage.height);
+        var aData = ctx.getImageData(0, 0, expectedImage.width, expectedImage.height);
+        var bData = result.getContext('2d').getImageData(0, 0, expectedImage.width, expectedImage.height);
+        for (var i = aData.length; i--;) {
+          if (aData[i] !== bData[i]) {
+            console.log("Diff at ", i, "=", Math.abs(aData[i] - bData[i]));
+          }
+        }
+        
+        // real test
         expect(imagediff.equal(result, expectedImage, 100)).to.be.true;
         done();
       }
