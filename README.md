@@ -1,5 +1,11 @@
 Nodetiles-Core
 =============
+
+[![Build Status](https://travis-ci.org/nodetiles/nodetiles-core.png?branch=master)](https://travis-ci.org/nodetiles/nodetiles-core)
+[![Code Climate](https://codeclimate.com/github/nodetiles/nodetiles-core.png)](https://codeclimate.com/github/nodetiles/nodetiles-core)
+[![NPM version](https://badge.fury.io/js/nodetiles-core.png)](http://badge.fury.io/js/nodetiles-core)
+
+
 Nodetiles-core is a javascript library for rendering map tiles suitable for slippy-maps and static images. Features include:
 
 - **Flexible Data-connectors**: We offer GeoJson and Shapefile connectors out-of-the-box, but it's easy to build your own. 
