@@ -3,6 +3,7 @@ node_js:
     - "0.10"
     - "0.8"
 before_script:
+    - "gem install --version 0.8.0 faraday"
     - "gem install travis-artifacts"
 after_script:
     - "travis-artifacts upload --path test/markers.output.png"
