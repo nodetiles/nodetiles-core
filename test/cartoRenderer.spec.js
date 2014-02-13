@@ -49,7 +49,7 @@ describe('cartoRenderer', function() {
       callback: function(err, result) {
         var expectedImage = new canvas.Image();
         expectedImage.src = fs.readFileSync(__dirname + '/markers.expected.png');
-        expect(imagediff.equal(result, expectedImage)).to.be.true;
+        expect(imagediff.equal(result, expectedImage, 100)).to.be.true;
         done();
       }
     });
