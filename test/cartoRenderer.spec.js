@@ -55,8 +55,8 @@ describe('cartoRenderer', function() {
         var tmpCanvas = new Canvas(expectedImage.width, expectedImage.height),
             ctx = tmpCanvas.getContext('2d');
         ctx.drawImage(expectedImage, 0, 0, expectedImage.width, expectedImage.height);
-        var aData = ctx.getImageData(0, 0, expectedImage.width, expectedImage.height);
-        var bData = result.getContext('2d').getImageData(0, 0, expectedImage.width, expectedImage.height);
+        var aData = ctx.getImageData(0, 0, expectedImage.width, expectedImage.height).data;
+        var bData = result.getContext('2d').getImageData(0, 0, expectedImage.width, expectedImage.height).data;
         for (var i = aData.length; i--;) {
           if (aData[i] !== bData[i]) {
             console.log("Diff at ", i, "=", Math.abs(aData[i] - bData[i]));
