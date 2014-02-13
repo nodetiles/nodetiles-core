@@ -10,5 +10,5 @@ env:
    global:
        - "ARTIFACTS_AWS_REGION=us-east-1"
        - "ARTIFACTS_S3_BUCKET=nodetiles-travis-artifacts"
-       - secure: "BYZ+3Lzc4kPw8NRbRHWc5lJKLO3JLDFPofs1JZe95aOKm7EpCbR6JtobiD4T+hMxOtjs2xVStqz78rHqA+K/tZrw3D4EDzMswtaZciFYQFufdGjXRtts8I5xvEytkwy6rtwSQImR9qCBYkUji7mz8Wqzr9diZwJNA/WhG/PUUTk="
-       - secure: "BhBfysrNrGUr/fuLpTeuQPsBlf4UX1+HJ9b8pDkS20AaK7WhXSuAXlJzIcRVxs+NlGoNicwaRFMhjWe3HE8Al2vwrBiYalEQIP07Z0/OW6d6OZfs/MC+oRufQ9pwyuf7Az4iZXVSCVa4X5q2AzTwwyL8x+uqADT/CL15RFZhBGc="
+       - secure: "NqqOSYikQqlTYdq6VK8X2QlIFzwic8MaAbXW/v5TneFhyufb3rwnp5tSZJyntjPRMOidlPwmfycnVgXdtexh3X/9h229Kg6Svw4dR6r/nplffdT1vkvlxXX98Xn3jaZzHOOe5sVJ7qWcvhKs9G+q/psJsrVi+n5Ut/Hg8YSxKX8="
+       - secure: "VDqAX6dRXgCR8HTYixq2E/sb784nLDTapts69H79YGl3ci1ksf5yDKjECI1NrLw4j0hfxGbDCrDzwZdzBpKu2lyF7uMPm6tRCU4sAjkz1oFzAChp635mVYa/zQFY79YLQbZ0z09W8at4Zx0qNdbtD3qkjCQC8UkegPYNcbBhEZQ="
