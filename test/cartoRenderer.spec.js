@@ -13,9 +13,7 @@ describe('cartoRenderer', function() {
   it('should draw markers', function(done) {
     var style = '#data {\
       marker-fill: #ff530d;\
-      marker-line-color: #fff;\
       marker-width: 8;\
-      marker-line-width: 2;\
       marker-allow-overlap: true;\
     }';
     var data = {
@@ -29,8 +27,6 @@ describe('cartoRenderer', function() {
       ]
     };
     var bounds = projector.util.tileToMeters(1192, 1551, 12);
-    
-    expect(style).to.have.length(151);
     
     var map = new nodetiles.Map();
     map.addStyle(style);
