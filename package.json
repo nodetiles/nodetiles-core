@@ -43,6 +43,7 @@
     "coveralls": "~2.7.1"
   },
   "scripts": {
+    "pretest": "npm ls --depth=Infinity > /dev/null",
     "test": "mocha"
   }
 }
