@@ -5,9 +5,10 @@ node_js:
 addons:
     apt:
         packages:
-            - libpng12-0
-            - libgif4
-            - libpango1.0-0
-            - libpixman-1-0
-            - libcairo2
+            - libcairo2-dev
+            - libjpeg8-dev
+            - libpango1.0-dev
+            - libgif-dev
+            - build-essential
+            - g++
 after_script: NODE_ENV=test istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage
