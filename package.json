@@ -29,7 +29,7 @@
   "dependencies": {
     "async": "~0.2",
     "lodash": "~1.2",
-    "canvas": "~1.0",
+    "canvas": "^1.0",
     "proj4js": "~0.3.0",
     "proj4js-defs": ">=0.0.1",
     "carto": "~0.9.3",
