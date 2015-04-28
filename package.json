@@ -1,6 +1,6 @@
 {
   "name": "nodetiles-core",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Joyful map rendering with Node.js.",
   "contributors": [
     {
@@ -29,19 +29,22 @@
   "dependencies": {
     "async": "~0.2",
     "lodash": "~1.2",
-    "canvas": "~1.0",
+    "canvas": ">=1.0 <2.0",
     "proj4js": "~0.3.0",
     "proj4js-defs": ">=0.0.1",
     "carto": "~0.9.5",
     "shp": "https://github.com/yuletide/node-shp/tarball/master"
   },
   "devDependencies": {
-    "mocha": "~1.9",
-    "chai": "~1.5",
-    "sinon": "~1.6",
+    "mocha": "~1.17.1",
+    "chai": "~1.9.0",
+    "sinon": "~1.8.0",
+    "istanbul": "~0.2.4",
+    "coveralls": "~2.7.1",
     "imagediff": "~1.0.4"
   },
   "scripts": {
+    "pretest": "npm ls --depth=Infinity > /dev/null",
     "test": "mocha"
   }
 }
