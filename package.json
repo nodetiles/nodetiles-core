@@ -32,7 +32,7 @@
     "canvas": ">=1.0 <2.0",
     "proj4js": "~0.3.0",
     "proj4js-defs": ">=0.0.1",
-    "carto": "~0.9.3",
+    "carto": "~0.9.5",
     "shp": "https://github.com/yuletide/node-shp/tarball/master"
   },
   "devDependencies": {
@@ -40,7 +40,8 @@
     "chai": "~1.9.0",
     "sinon": "~1.8.0",
     "istanbul": "~0.2.4",
-    "coveralls": "~2.7.1"
+    "coveralls": "~2.7.1",
+    "imagediff": "~1.0.8"
   },
   "scripts": {
     "pretest": "npm ls --depth=Infinity > /dev/null",
