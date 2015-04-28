@@ -41,7 +41,7 @@
     "sinon": "~1.8.0",
     "istanbul": "~0.2.4",
     "coveralls": "~2.7.1",
-    "imagediff": "~1.0.4"
+    "imagediff": "~1.0.8"
   },
   "scripts": {
     "pretest": "npm ls --depth=Infinity > /dev/null",
